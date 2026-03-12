@@ -316,6 +316,7 @@ Effects:
 
 - Pool balance increases
 - Monthly inflow increases
+- User debt reduces
 
 ---
 
@@ -339,7 +340,7 @@ Shared with User B
 
 Effects:
 
-- Pool balance decreases
+- User A debt reduces by expense/2
 - Expense recorded as shared usage
 
 ---

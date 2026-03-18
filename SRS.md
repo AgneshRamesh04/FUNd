@@ -1,526 +1,434 @@
-# FUNd
-
-**FUNd** is an iOS application built with Flutter to manage a **shared pool of money between two users**.  
-It allows both users to track deposits, shared expenses, personal withdrawals, and balances while maintaining **real-time synchronization across both devices**.
-
-The goal of FUNd is to provide a simple and transparent way for two people to manage a shared financial pool for things like household spending, travel, subscriptions, or temporary personal borrowing.
+# FUNd – Software Requirements Specification (SRS)
 
 ---
 
-# Table of Contents
+# 1. Project Overview
 
-- Project Overview
-- Technology Stack
-- System Architecture
-- Functional Requirements
-- Application Screens
-- Expense & Deposit Flow
-- Database Design
-- Non-Functional Requirements
-- Security
-- Future Enhancements
-- Development Phases
-- Success Criteria
+## 1.1 Purpose
 
----
+FUNd is a mobile application designed for **two users to manage a shared pool of money**.
 
-# Project Overview
+It enables users to:
 
-## Purpose
+* Deposit money into a shared pool
+* Borrow money temporarily for personal use
+* Record shared expenses
+* Track balances and debts in real time
+* View monthly summaries and financial activity
 
-FUNd helps **two users maintain and monitor a shared financial pool**.
+The system is built on a **ledger-style transaction model**, where all money movements are recorded between:
 
-Users can:
-
-- Deposit money into the pool
-- Record shared expenses
-- Temporarily use money from the pool for personal expenses
-- Track debts owed back to the pool
-- Monitor inflow, outflow, and balance
-- View leave usage and remaining balance
-
-All data is **visible to both users and synchronized in real time**.
+* User A
+* User B
+* FUNd Pool
 
 ---
 
-## Target Users
+## 1.2 Target Users
 
-Two individuals who share expenses such as:
+Two individuals sharing finances such as:
 
-- Household costs
-- Travel
-- Subscriptions
-- Dining
-- Temporary personal borrowing from the shared pool
+* Household expenses
+* Travel
+* Subscriptions
+* Dining
+* Temporary borrowing
 
 ---
 
-# Technology Stack
+# 2. System Architecture
+
+Flutter iOS App (User A)
+↕ Realtime Sync
+Supabase Backend (PostgreSQL)
+↕ Realtime Sync
+Flutter iOS App (User B)
+
+* Backend is the **single source of truth**
+* Clients subscribe to realtime updates
+
+---
+
+# 3. Technology Stack
 
 ## Frontend
 
-- Flutter (iOS focus)
-- Dart
+* Flutter (iOS focus)
+* Dart
 
 ## Backend
 
-Recommended backend:
-
-**Supabase**
-
-Reasons:
-
-- Free tier
-- Real-time database updates
-- PostgreSQL
-- Flutter support
-- Authentication support
-
-Alternative options:
-
-- Appwrite
-- PocketBase (self hosted)
+* Supabase (PostgreSQL + Realtime + Auth)
 
 ---
 
-# System Architecture
+# 4. User Roles
 
-Flutter iOS App (User A)  
-↕ Real-time Sync  
-Supabase Backend (PostgreSQL + Realtime)  
-↕ Real-time Sync  
-Flutter iOS App (User B)
+* Two users only
+* Equal permissions:
 
-The Supabase database acts as the **single source of truth**.  
-Both devices subscribe to realtime database updates.
+  * View all transactions
+  * Add / Edit / Delete transactions
 
 ---
 
-# Functional Requirements
+# 5. Core Financial Model
 
-## Authentication
+FUNd uses a **ledger-based transaction system**.
 
-The application supports two authorized users.
+Each transaction represents a movement of money between entities:
 
-Features:
+* User A
+* User B
+* Pool
 
-- Email + password login
-- Two authorized accounts only
-- Each account mapped to a unique `user_id`
-
----
-
-# Application Screens
-
-The app contains **three primary screens**.
-
-Navigation is done via a **bottom navigation bar**.
-
-Home  
-Personal  
-Shared
+Balances are **not stored**, but derived from transactions.
 
 ---
 
-# Home Screen
+# 6. Application Structure
 
-The Home Screen provides a **financial overview for the current month**.
+## Navigation
 
-## Displayed Information
+Bottom Navigation Bar:
+
+* Home
+* Personal
+* Shared
+
+Floating Action Button (+):
+
+* Accessible globally
+* Opens Add Transaction flow
+
+---
+
+# 7. Home Screen
+
+Provides a **monthly financial overview**.
+
+## Displays
 
 ### Pool Balance
 
-The total current balance of the shared pool.
-
-Example
-
-Pool Balance: $2,450
-
----
+Total available money in pool
 
 ### Monthly Summary
 
-Shows financial activity for the selected month.
+* Inflow
+* Outflow
 
-Example
+### Money Owed to Pool
 
-Inflow: $500  
-Outflow: $320
-
----
-
-### Money Owed to the Pool
-
-Personal withdrawals create a debt that the user owes back.
-
-Example
-
-User A owes: $80  
-User B owes: $0
-
----
+* User A debt
+* User B debt
 
 ### Leave Tracking
 
-Each user has a leave counter.
+Per user:
 
-Displayed per user:
-
-- Leave used this month
-- Remaining leave balance
-
-Example
-
-User A  
-Leave used: 2  
-Balance: 6  
-
-User B  
-Leave used: 1  
-Balance: 7  
+* Leave used
+* Remaining balance
 
 ---
 
-### Floating Action Button
+# 8. Personal Screen
 
-A floating **+ button** exists on the Home screen.
+Displays **Borrow transactions** (Pool → User).
 
-This button opens the **Add Transaction interface** similar to Splitwise.
+## Fields
 
----
+* Description
+* Amount
+* User
+* Date
+* Notes
 
-# Personal Expenses Screen
+## Behavior
 
-This screen tracks **temporary withdrawals from the pool used for personal expenses**.
-
-These expenses represent **money owed back to the pool**.
-
-## Display Format
-
-Monthly grouped list.
-
-Each entry contains:
-
-- Description
-- Amount
-- User
-- Date
-- Optional notes
-
-Example
-
-March 2026
-
-Coffee Beans  
-$20  
-User A
-
-Taxi  
-$15  
-User B
+* Reduces pool balance
+* Increases user debt
 
 ---
 
-## Effect on Pool
+# 9. Shared Screen
 
-When a personal expense is added:
+Displays **Shared Expenses**.
 
-- Pool balance decreases
-- User's debt to pool increases
+## Fields
 
----
+* Description
+* Amount
+* Paid by
+* Date
+* Notes
 
-# Combined Expenses Screen
+## Behavior
 
-This screen tracks **expenses meant to be paid using the shared pool**.
-
-Examples include:
-
-- Groceries
-- Rent
-- Dining
-- Subscriptions
-- Household purchases
-
-## Display Fields
-
-Each expense contains:
-
-- Description
-- Amount
-- Paid by
-- Date
-- Optional notes
-
-Example
-
-Groceries  
-$120  
-Paid by User A
-
-Streaming Subscription  
-$15  
-Paid by User B
+* Splits cost between users
+* Adjusts user balances
 
 ---
 
-# Vacation Tracking (Subpage)
+# 10. Trip Tracking (Optional)
 
-Within the Shared Expenses screen, a subpage exists for tracking **trip-related expenses**.
+Allows grouping expenses under trips.
 
-Trips group expenses together for better organization.
+## Fields
 
-Example
+* Trip name
+* Date range
+* Expense list
 
-Trip: Bali 2026
+## Summary
 
-Expenses
-
-Flight  
-Hotel  
-Food  
-Activities
-
-Trip summary can include:
-
-- Total cost
-- Contributions by each user
-- Pool usage
+* Total cost
+* Contribution per user
 
 ---
 
-# Add Transaction Flow
+# 11. Transaction System
 
-The floating **+ button** opens a modal allowing the user to choose:
+## 11.1 Transaction Types
 
-- Add Personal Expense
-- Add Shared Expense
-- Add Deposit
-
----
-
-## Add Personal Expense
-
-Fields:
-
-- Description
-- Amount
-- Person (default current user)
-- Date
-- Notes (optional)
-
-Default date is **current date**.
-
-A calendar icon allows changing the date.
+* borrow (Pool → User)
+* deposit (User → Pool)
+* shared_expense (User → Shared)
+* pool_expense (Pool → External)
 
 ---
 
-## Add Shared Expense
+## 11.2 Transaction Effects
 
-Fields:
-
-- Description
-- Amount
-- Paid by
-- Date
-- Notes
-
----
-
-## Add Deposit
-
-Fields:
-
-- Amount
-- Deposited by
-- Date
-- Notes
-
-Effects:
-
-- Pool balance increases
-- Monthly inflow increases
+| Type           | Effect              |
+| -------------- | ------------------- |
+| Borrow         | Pool ↓, User debt ↑ |
+| Deposit        | Pool ↑, User debt ↓ |
+| Shared Expense | Split between users |
+| Pool Expense   | Pool ↓              |
 
 ---
 
-# Database Design
+# 12. Add Transaction Flow
 
-## Users
+Single reusable form.
 
-| Field | Type |
-|-----|-----|
-| id | uuid |
-| name | text |
-| email | text |
-| created_at | timestamp |
+## Entry Options
 
----
-
-## Deposits
-
-| Field | Type |
-|-----|-----|
-| id | uuid |
-| amount | numeric |
-| user_id | uuid |
-| date | date |
-| notes | text |
-| created_at | timestamp |
+* Borrow from FUNd
+* Add Money to FUNd
+* Shared Expense
 
 ---
 
-## Expenses
+## 12.1 Form Fields
 
-| Field | Type |
-|-----|-----|
-| id | uuid |
-| description | text |
-| amount | numeric |
-| expense_type | personal/shared |
-| paid_by | uuid |
-| date | date |
-| trip_id | uuid (optional) |
-| notes | text |
-| created_at | timestamp |
+* Description
+* Amount
+* Paid by
+* Received by / Split with
+* Date (default: today)
+* Notes (optional)
 
 ---
 
-## Trips
+## 12.2 Default Logic
 
-| Field | Type |
-|-----|-----|
-| id | uuid |
-| name | text |
-| start_date | date |
-| end_date | date |
-| created_at | timestamp |
+| Type    | Paid By      | Received By  |
+| ------- | ------------ | ------------ |
+| Borrow  | Pool         | Current User |
+| Deposit | Current User | Pool         |
+| Shared  | Current User | Both         |
 
 ---
 
-## Leave Tracking
+# 13. Database Design
 
-| Field | Type |
-|-----|-----|
-| id | uuid |
-| user_id | uuid |
-| used | integer |
-| balance | integer |
-| month | integer |
-| year | integer |
+## 13.1 Users
+
+* id (uuid)
+* name
+* email
+* created_at
 
 ---
 
-# Non-Functional Requirements
+## 13.2 Transactions
 
-## Real-Time Synchronization
-
-Changes made on one device must appear **instantly on the other device**.
-
-Supabase realtime subscriptions will monitor:
-
-- deposits
-- expenses
-- leave records
-
----
-
-## Performance
-
-The application must:
-
-- Load initial data in under 2 seconds
-- Reflect remote updates in under 500 milliseconds
+* id
+* type (borrow, deposit, shared_expense, pool_expense)
+* description
+* amount
+* paid_by
+* received_by
+* split_type (equal / custom)
+* split_data (json)
+* date
+* trip_id (optional)
+* notes
+* created_at
+* updated_at
 
 ---
 
-## Data Consistency
+## 13.3 Trips
 
-The Supabase database acts as the **single source of truth**.
-
-Conflict handling strategy:
-
-Last write wins.
-
-All records contain timestamps.
+* id
+* name
+* start_date
+* end_date
+* created_at
 
 ---
 
-## Offline Support (Future)
+## 13.4 Leave Tracking
 
-Optional offline caching using:
-
-- Hive
-- SQLite
-
-Data will sync once connectivity returns.
-
----
-
-# Security
-
-Security measures include:
-
-- Email/password authentication
-- Supabase row level security
-- Only authorized users can access database records
+* id
+* user_id
+* used
+* balance
+* month
+* year
 
 ---
 
-# Future Enhancements
+# 14. Derived Calculations
 
-Potential future features:
+Not stored in DB:
 
-- Expense analytics and charts
-- Monthly spending breakdown
-- Export reports (CSV / PDF)
-- Notifications for repayments
-- iOS home screen widgets
-- Budget alerts
-- Smart summaries
+* Pool Balance
+* User Debt
+* Monthly Inflow / Outflow
+
+All computed via transaction service.
 
 ---
 
-# Development Phases
+# 15. Real-Time Synchronization
 
-## Phase 1 — MVP
+* Instant updates across devices
+* Subscriptions on:
 
-Core features:
-
-- Flutter UI
-- Supabase backend
-- Deposits
-- Personal expenses
-- Shared expenses
-- Pool balance calculation
-- Real-time synchronization
+  * transactions
+  * trips
+  * leave
 
 ---
+
+# 16. Performance Requirements
+
+* Initial load < 2s
+* UI updates < 500ms
+
+---
+
+# 17. Data Consistency
+
+* Backend = source of truth
+* Conflict strategy: Last write wins
+* All records include timestamps
+
+---
+
+# 18. Edge Case Handling
+
+System must handle:
+
+* Editing transactions (recalculate balances)
+* Deleting transactions (reverse effects)
+* Partial repayments
+* Negative pool balance (configurable)
+
+---
+
+# 19. Security
+
+* Email/password authentication
+* Row-level security
+* Restricted access to only 2 users
+
+---
+
+# 20. Non-Functional Requirements
+
+* Real-time sync
+* High reliability
+* Clean UI/UX
+* Minimal user input effort
+
+---
+
+# 21. Future Enhancements
+
+* Analytics dashboard
+* Spending charts
+* Budget alerts
+* Export (CSV/PDF)
+* Notifications
+* iOS widgets
+* Offline support
+
+---
+
+# 22. Development Phases
+
+## Phase 1 – MVP
+
+* Core transactions
+* Pool balance
+* Real-time sync
 
 ## Phase 2
 
-Enhancements:
-
-- Leave tracking
-- Vacation grouping
-
----
+* Trips
+* Leave tracking improvements
 
 ## Phase 3
 
-Advanced features:
-
-- Offline support
-- Analytics dashboard
-- Charts and reports
+* Offline support
+* Analytics
 
 ---
 
-# Success Criteria
+# 23. Success Criteria
 
-FUNd will be considered successful when:
+* Real-time sync between both users
+* Transaction entry < 10 seconds
+* Accurate balance calculations
+* No manual sync required
+* Full transparency between users
 
-- Both users see identical data in real time
-- Expenses can be added within 10 seconds
-- Pool balance updates instantly
-- No manual syncing is required
-- Both users have full visibility of all transactions
+---
+
+# 24. Architecture Recommendation (Flutter)
+
+Feature-based structure:
+
+/features
+/transactions
+/home
+/personal
+/shared
+
+/core
+/database
+/services
+/utils
+
+## Key Rule
+
+All calculations must be handled in a **Transaction Service Layer**, not UI.
+
+---
+
+# 25. Key Design Principles
+
+* Single source of truth (transactions)
+* Reusable UI components
+* Minimal duplication
+* Scalable transaction model
+* Clear separation of concerns
+
+---
+
+# END OF DOCUMENT

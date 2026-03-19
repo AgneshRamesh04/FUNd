@@ -44,7 +44,15 @@ class DemoData {
       'type': 'borrow',
       'amount': 200.0,
       'paid_by': 'pool',
-      'received_by': userBId, // User A takes money out (Debt!)
+      'received_by': userAId, // User A takes money out (Debt!)
+      'date': '2026-02-15T12:00:00Z',
+    },
+    {
+      'id': '5',
+      'type': 'borrow',
+      'amount': 20000.0,
+      'paid_by': 'pool',
+      'received_by': userAId, // User A takes money out (Debt!)
       'date': '2026-02-15T12:00:00Z',
     },
   ];

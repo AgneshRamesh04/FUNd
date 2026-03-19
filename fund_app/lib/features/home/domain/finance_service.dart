@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import '../../../core/constants/demo_data.dart';
 import 'finance_summary.dart';
 
@@ -57,6 +59,28 @@ class FinanceService {
       inflowGraph: _normalize(inflowBuckets),
       outflowGraph: _normalize(outflowBuckets),
     );
+  }
+
+  static Map<String, List<Map<String, dynamic>>> groupTransactionsByMonth(List<Map<String, dynamic>> txs) {
+    // 1. Filter for 'borrow' type only (Personal Screen requirement)
+    final borrowTxs = txs.where((tx) => tx['type'] == 'borrow').toList();
+    
+    // 2. Sort Newest First
+    borrowTxs.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
+
+    final Map<String, List<Map<String, dynamic>>> grouped = {};
+
+    for (var tx in borrowTxs) {
+      final date = DateTime.parse(tx['date']);
+      final monthKey = DateFormat('MMMM yyyy').format(date).toUpperCase();
+      
+      if (!grouped.containsKey(monthKey)) {
+        grouped[monthKey] = [];
+      }
+      grouped[monthKey]!.add(tx);
+    }
+    
+    return grouped;
   }
 
   static List<double> _normalize(List<double> data) {

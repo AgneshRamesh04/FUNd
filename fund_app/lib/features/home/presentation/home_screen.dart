@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Add intl to your pubspec.yaml
 import '../../../core/constants/demo_data.dart';
+import '../../../core/data/transaction_repository.dart';
 import '../domain/finance_service.dart';
 import '../../leave/domain/leave_model.dart';
 import '../domain/finance_summary.dart';
@@ -45,62 +46,71 @@ class _HomeScreenState extends State<HomeScreen> {
     // Format for the AppBar title
     final String monthDisplay = DateFormat('MMMM yyyy').format(_selectedDate);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: false,
-        title: GestureDetector(
-          onTap: () => _showMonthPicker(context),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                monthDisplay,
-                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+    return FutureBuilder(
+
+      future: TransactionRepository().getPersonalGroups(),
+      builder: (context, asyncSnapshot) {
+        if (!asyncSnapshot.hasData) return const Center(child: CircularProgressIndicator());
+
+        final groupedTransactions = asyncSnapshot.data!;
+        return Scaffold(
+          backgroundColor: const Color(0xFFF8F9FB),
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: false,
+            title: GestureDetector(
+              onTap: () => _showMonthPicker(context),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    monthDisplay,
+                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                  ),
+                  const Icon(Icons.keyboard_arrow_down, color: Colors.black),
+                ],
               ),
-              const Icon(Icons.keyboard_arrow_down, color: Colors.black),
+            ),
+            actions: [
+              IconButton(icon: const Icon(Icons.wb_sunny_outlined, color: Colors.black), onPressed: () {}),
+              const CircleAvatar(
+                  radius: 15,
+                  backgroundColor: Color(0xFF1A1C1E),
+                  child: Text("A", style: TextStyle(color: Colors.white, fontSize: 12))
+              ),
+              const SizedBox(width: 16),
             ],
           ),
-        ),
-        actions: [
-          IconButton(icon: const Icon(Icons.wb_sunny_outlined, color: Colors.black), onPressed: () {}),
-          const CircleAvatar(
-              radius: 15,
-              backgroundColor: Color(0xFF1A1C1E),
-              child: Text("A", style: TextStyle(color: Colors.white, fontSize: 12))
-          ),
-          const SizedBox(width: 16),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            const Text("POOL BALANCE",
-                style: TextStyle(color: Colors.grey, letterSpacing: 1.5, fontSize: 10, fontWeight: FontWeight.bold)),
-            Text("\$${summary.poolBalance.toStringAsFixed(2)}",
-                style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold)),
-
-            const SizedBox(height: 30),
-
-            Row(
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
               children: [
-                _buildStatCard("INFLOW", "+\$${summary.inflow.toStringAsFixed(2)}", Colors.green, summary.inflowGraph),
-                const SizedBox(width: 16),
-                _buildStatCard("OUTFLOW", "-\$${summary.outflow.toStringAsFixed(2)}", Colors.red, summary.outflowGraph),
+                const SizedBox(height: 20),
+                const Text("POOL BALANCE",
+                    style: TextStyle(color: Colors.grey, letterSpacing: 1.5, fontSize: 10, fontWeight: FontWeight.bold)),
+                Text("\$${summary.poolBalance.toStringAsFixed(2)}",
+                    style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold)),
+
+                const SizedBox(height: 30),
+
+                Row(
+                  children: [
+                    _buildStatCard("INFLOW", "+\$${summary.inflow.toStringAsFixed(2)}", Colors.green, summary.inflowGraph),
+                    const SizedBox(width: 16),
+                    _buildStatCard("OUTFLOW", "-\$${summary.outflow.toStringAsFixed(2)}", Colors.red, summary.outflowGraph),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+                _buildDebtSection(summary),
+                const SizedBox(height: 20),
+                _buildLeaveSection(leaveModels),
               ],
             ),
-
-            const SizedBox(height: 20),
-            _buildDebtSection(summary),
-            const SizedBox(height: 20),
-            _buildLeaveSection(leaveModels),
-          ],
-        ),
-      ),
+          ),
+        );
+      }
     );
   }
 

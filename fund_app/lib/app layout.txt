@@ -1,0 +1,14 @@
+lib/
+├── core/
+│   ├── constants/          <-- demo_data.dart
+│   └── theme/              
+├── features/
+│   ├── home/
+│   │   ├── data/           <-- home_repository_impl.dart
+│   │   ├── domain/         <-- home_repository.dart, finance_summary.dart
+│   │   └── presentation/   <-- home_screen.dart, widgets/
+│   ├── transactions/
+│   │   └── domain/         <-- transaction_model.dart
+│   └── leave/
+│       └── domain/         <-- leave_model.dart
+└── main.dart

@@ -1,4 +1,3 @@
-import '../domain/home_repository.dart';
 import '../domain/finance_summary.dart';
 import '../domain/finance_service.dart';
 import '../../../core/constants/demo_data.dart';

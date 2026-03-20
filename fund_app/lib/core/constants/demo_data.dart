@@ -2,8 +2,6 @@ class DemoData {
   static const String userAId = 'uuid-user-a';
   static const String userBId = 'uuid-user-b';
 
-  static const String currentMonthName = "March";
-
   // 13.2 Transactions Table Mock
   static const List<Map<String, dynamic>> mockTransactions = [
     {
@@ -40,7 +38,7 @@ class DemoData {
       'date': '2026-03-05T12:00:00Z',
     },
     {
-      'id': '4',
+      'id': '6',
       'type': 'borrow',
       'amount': 200.0,
       'paid_by': 'pool',
@@ -53,7 +51,74 @@ class DemoData {
       'amount': 20000.0,
       'paid_by': 'pool',
       'received_by': userAId, // User A takes money out (Debt!)
-      'date': '2026-02-15T12:00:00Z',
+      'date': '2026-01-15T12:00:00Z',
+    },
+    {
+      'id': '6',
+      'type': 'borrow',
+      'amount': 280.0,
+      'paid_by': 'pool',
+      'received_by': userBId, // User A takes money out (Debt!)
+      'date': '2025-11-15T12:00:00Z',
+    },
+    {
+      'id': 't4',
+      'type': 'shared_expense',
+      'description': 'Flight Tickets',
+      'amount': 1200.0,
+      'paid_by': userAId,
+      'received_by': 'shared',
+      'date': '2026-01-10T10:00:00Z',
+      'trip_id': 'trip-1', // Linked to Bali 2026
+    },
+    {
+      'id': 't5',
+      'type': 'shared_expense',
+      'description': 'Hotel Booking',
+      'amount': 1640.0,
+      'paid_by': userBId,
+      'received_by': 'shared',
+      'date': '2026-01-12T10:00:00Z',
+      'trip_id': 'trip-1', // Linked to Bali 2026
+    },
+    {
+      'id': 't6',
+      'type': 'shared_expense',
+      'description': 'Airbnb Cabin',
+      'amount': 380.0,
+      'paid_by': userAId,
+      'received_by': 'shared',
+      'date': '2026-02-05T10:00:00Z',
+      'trip_id': 'trip-2', // Linked to Weekend Getaway
+    },
+    {
+
+      'id': 't7',
+      'type': 'shared_expense',
+      'description': 'Airbnb Cabin - 2',
+      'amount': 380.0,
+      'paid_by': userAId,
+      'received_by': 'shared',
+      'date': '2026-02-05T10:00:00Z',
+      'trip_id': 'trip-2', // Linked to Weekend Getaway
+    },
+  ];
+
+  // 13.3 Trips Table Mock
+  static const List<Map<String, dynamic>> mockTrips = [
+    {
+      'id': 'trip-1',
+      'name': 'Bali 2026',
+      'start_date': '2026-01-15T00:00:00Z',
+      'end_date': '2026-01-22T00:00:00Z',
+      'created_at': '2026-01-01T10:00:00Z',
+    },
+    {
+      'id': 'trip-2',
+      'name': 'Weekend Getaway',
+      'start_date': '2026-02-08T00:00:00Z',
+      'end_date': '2026-02-09T00:00:00Z',
+      'created_at': '2026-02-01T12:00:00Z',
     },
   ];
 

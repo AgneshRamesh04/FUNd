@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'features/home/presentation/home_screen.dart';
 import 'features/personal/presentation/personal_screen.dart';
+import 'features/shared/presentation/shared_screen.dart';
 
 void main() {
   // In the future, we will initialize Supabase here:
@@ -45,7 +46,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   final List<Widget> _screens = [
     HomeScreen(),
     const PersonalScreen(),
-    const Center(child: Text("Shared Screen (Coming Soon)")),
+    const SharedScreen(),
   ];
 
   @override

@@ -5,7 +5,8 @@ import '../../features/home/domain/finance_summary.dart';
 class TransactionRepository {
   // Simple in-memory cache
   List<Map<String, dynamic>>? _allTransactionsCache;
-  
+  List<Map<String, dynamic>>? _allTripsCache;
+
   // Singleton pattern so Home and Personal share the same data instance
   static final TransactionRepository _instance = TransactionRepository._internal();
   factory TransactionRepository() => _instance;
@@ -24,9 +25,6 @@ class TransactionRepository {
     return _allTransactionsCache!;
   }
 
-  /// Use this to clear cache when a new transaction is added
-  void refresh() => _allTransactionsCache = null;
-
   /// Optimized: Calculates the Home Summary using the cache
   Future<FinanceSummary> getHomeSummary(DateTime selectedMonth) async {
     final txs = await getAllTransactions();
@@ -41,5 +39,19 @@ class TransactionRepository {
     final txs = await getAllTransactions();
     // Re-using the logic we wrote for grouping
     return FinanceService.groupTransactionsByMonth(txs);
+  }
+
+  /// Fetches trips from mock data or Supabase
+  Future<List<Map<String, dynamic>>> getAllTrips() async {
+    if (_allTripsCache != null) return _allTripsCache!;
+
+    // In the future: await supabase.from('trips').select();
+    _allTripsCache = List.from(DemoData.mockTrips);
+    return _allTripsCache!;
+  }
+
+  void refresh() {
+    _allTransactionsCache = null;
+    _allTripsCache = null; // Clear both on refresh
   }
 }

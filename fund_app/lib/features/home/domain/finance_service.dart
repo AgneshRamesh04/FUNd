@@ -37,7 +37,7 @@ class FinanceService {
         }
       }
 
-      else if (type == 'borrow' || type == 'pool_expense') {
+      else if (type == 'borrow' || type == 'shared_expense') {
         poolBalance -= amount;
         if (tx['received_by'] == DemoData.userAId) userADebt += amount;
         if (tx['received_by'] == DemoData.userBId) userBDebt += amount;
@@ -80,6 +80,27 @@ class FinanceService {
       grouped[monthKey]!.add(tx);
     }
     
+    return grouped;
+  }
+
+  static double calculateSharedTotal(List<Map<String, dynamic>> txs, DateTime month) {
+    return txs
+        .where((tx) => 
+            tx['type'] == 'shared_expense' && 
+            DateTime.parse(tx['date']).month == month.month)
+        .fold(0.0, (sum, tx) => sum + (tx['amount'] as num).toDouble());
+  }
+
+  static Map<String, List<Map<String, dynamic>>> groupSharedByMonth(List<Map<String, dynamic>> txs) {
+    final sharedTxs = txs.where((tx) => tx['type'] == 'shared_expense').toList();
+    sharedTxs.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
+
+    Map<String, List<Map<String, dynamic>>> grouped = {};
+    for (var tx in sharedTxs) {
+      final date = DateTime.parse(tx['date']);
+      final key = DateFormat('MMMM yyyy').format(date).toUpperCase();
+      grouped.putIfAbsent(key, () => []).add(tx);
+    }
     return grouped;
   }
 

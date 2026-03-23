@@ -11,16 +11,18 @@ FUNd is a mobile application designed for **two users to manage a shared pool of
 It enables users to:
 
 * Deposit money into a shared pool
-* Borrow money temporarily for personal use
-* Record shared expenses
-* Track balances and debts in real time
+* Borrow money for personal use
+* Record expenses paid using or on behalf of the pool
+* Track **pool balance and individual user obligations** in real time
 * View monthly summaries and financial activity
 
-The system is built on a **ledger-style transaction model**, where all money movements are recorded between:
+The system is built on a **pool-centric transaction model**, where all transactions affect:
 
-* User A
-* User B
-* FUNd Pool
+* The **Pool Balance** (actual money available)
+* Each user's **Net Position vs Pool**:
+
+  * Positive → user owes the pool
+  * Negative → pool owes the user
 
 ---
 
@@ -74,15 +76,17 @@ Flutter iOS App (User B)
 
 # 5. Core Financial Model
 
-FUNd uses a **ledger-based transaction system**.
+FUNd uses a **pool-centric event-based transaction system**.
 
-Each transaction represents a movement of money between entities:
+### Key Concepts
 
-* User A
-* User B
-* Pool
+1. **Pool Balance** – actual cash available in the pool
+2. **User Balance (per user)** – net position vs pool
 
-Balances are **not stored**, but derived from transactions.
+   * Positive → user owes pool
+   * Negative → pool owes user
+
+> The system does **not enforce global balance (sum = 0)**.
 
 ---
 
@@ -111,17 +115,21 @@ Provides a **monthly financial overview**.
 
 ### Pool Balance
 
-Total available money in pool
+Total available money in the pool
 
 ### Monthly Summary
 
-* Inflow
-* Outflow
+* Inflow (money entering pool)
+* Outflow (money leaving pool)
 
-### Money Owed to Pool
+### User Positions
 
-* User A debt
-* User B debt
+For each user:
+
+* Net balance vs pool
+
+  * Positive → owes pool
+  * Negative → pool owes user
 
 ### Leave Tracking
 
@@ -134,39 +142,37 @@ Per user:
 
 # 8. Personal Screen
 
-Displays **Borrow transactions** (Pool → User).
+Displays **personal financial interactions with the pool**.
 
-## Fields
+## Includes
 
-* Description
-* Amount
-* User
-* Date
-* Notes
+* Borrow transactions (Pool → User)
+* Deposits (User → Pool)
+* Monthly obligations
 
 ## Behavior
 
-* Reduces pool balance
-* Increases user debt
+* Borrow → increases user debt, reduces pool balance
+* Deposit → reduces user debt, increases pool balance
+* Obligation → increases user debt only
 
 ---
 
 # 9. Shared Screen
 
-Displays **Shared Expenses**.
+Displays **expenses related to the pool**.
 
-## Fields
+## Includes
 
-* Description
-* Amount
-* Paid by
-* Date
-* Notes
+* Pool Expenses – paid directly from pool
+* User Paid for Pool – user pays on behalf of pool
 
 ## Behavior
 
-* Splits cost between users
-* Adjusts user balances
+| Scenario           | Effect                                  |
+| ------------------ | --------------------------------------- |
+| Pool pays          | Pool balance decreases                  |
+| User pays for pool | User balance decreases (pool owes user) |
 
 ---
 
@@ -191,33 +197,35 @@ Allows grouping expenses under trips.
 
 ## 11.1 Transaction Types
 
-* borrow (Pool → User)
-* deposit (User → Pool)
-* shared_expense (User → Shared)
-* pool_expense (Pool → External)
+* `monthly_obligation` – user owes pool (no cash movement)
+* `deposit` – user adds money to pool
+* `borrow` – user takes money from pool
+* `pool_expense` – expense paid using pool funds
+* `user_paid_for_pool` – user pays on behalf of pool
 
 ---
 
 ## 11.2 Transaction Effects
 
-| Type           | Effect              |
-| -------------- | ------------------- |
-| Borrow         | Pool ↓, User debt ↑ |
-| Deposit        | Pool ↑, User debt ↓ |
-| Shared Expense | Split between users |
-| Pool Expense   | Pool ↓              |
+| Type               | Pool Balance | User Balance |
+| ------------------ | ------------ | ------------ |
+| monthly_obligation | 0            | +amount      |
+| deposit            | +amount      | -amount      |
+| borrow             | -amount      | +amount      |
+| pool_expense       | -amount      | 0            |
+| user_paid_for_pool | 0            | -amount      |
 
 ---
 
 # 12. Add Transaction Flow
 
-Single reusable form.
-
 ## Entry Options
 
-* Borrow from FUNd
-* Add Money to FUNd
-* Shared Expense
+* Add Monthly Obligation
+* Add Money to Pool (Deposit)
+* Borrow from Pool
+* Pool Expense
+* Paid for Pool
 
 ---
 
@@ -225,8 +233,7 @@ Single reusable form.
 
 * Description
 * Amount
-* Paid by
-* Received by / Split with
+* User (if applicable)
 * Date (default: today)
 * Notes (optional)
 
@@ -234,11 +241,13 @@ Single reusable form.
 
 ## 12.2 Default Logic
 
-| Type    | Paid By      | Received By  |
-| ------- | ------------ | ------------ |
-| Borrow  | Pool         | Current User |
-| Deposit | Current User | Pool         |
-| Shared  | Current User | Both         |
+| Type          | User          |
+| ------------- | ------------- |
+| Obligation    | Selected user |
+| Deposit       | Selected user |
+| Borrow        | Selected user |
+| Pool Expense  | None          |
+| Paid for Pool | Selected user |
 
 ---
 
@@ -253,27 +262,32 @@ Single reusable form.
 
 ---
 
-## 13.2 Transactions
+## 13.2 Pools
 
-* id
-* type (borrow, deposit, shared_expense, pool_expense)
-* description
-* amount
-* paid_by
-* received_by
-* split_type (equal / custom)
-* split_data (json)
-* date
-* trip_id (optional)
-* notes
+* id (uuid)
+* name
 * created_at
-* updated_at
 
 ---
 
-## 13.3 Trips
+## 13.3 Transactions
+
+* id (uuid)
+* type (monthly_obligation, deposit, borrow, pool_expense, user_paid_for_pool)
+* user_id (nullable for pool_expense)
+* pool_id
+* description
+* amount
+* date
+* notes
+* created_at
+
+---
+
+## 13.4 Trips (Optional)
 
 * id
+* pool_id
 * name
 * start_date
 * end_date
@@ -281,7 +295,7 @@ Single reusable form.
 
 ---
 
-## 13.4 Leave Tracking
+## 13.5 Leave Tracking (Optional)
 
 * id
 * user_id
@@ -289,18 +303,34 @@ Single reusable form.
 * balance
 * month
 * year
+* linked_transaction_id (nullable)
+* created_at
 
 ---
 
 # 14. Derived Calculations
 
-Not stored in DB:
+All balances are **derived**, not stored.
 
-* Pool Balance
-* User Debt
-* Monthly Inflow / Outflow
+## Pool Balance
 
-All computed via transaction service.
+```
+sum(deposits) - sum(borrows) - sum(pool_expenses)
+```
+
+## User Balance
+
+```
++ obligations
++ borrows
+- deposits
+- paid_for_pool
+```
+
+## Monthly Metrics
+
+* Inflow = deposits
+* Outflow = borrows + pool_expenses
 
 ---
 
@@ -334,10 +364,11 @@ All computed via transaction service.
 
 System must handle:
 
-* Editing transactions (recalculate balances)
-* Deleting transactions (reverse effects)
-* Partial repayments
-* Negative pool balance (configurable)
+* Editing transactions → recalculates balances
+* Deleting transactions → reverses impact
+* Partial repayments (via deposits)
+* Negative pool balance (allowed)
+* Pool owing users (negative user balance)
 
 ---
 
@@ -404,16 +435,17 @@ System must handle:
 
 Feature-based structure:
 
+```
 /features
-/transactions
-/home
-/personal
-/shared
-
+  /transactions
+  /home
+  /personal
+  /shared
 /core
-/database
-/services
-/utils
+  /database
+  /services
+  /utils
+```
 
 ## Key Rule
 
@@ -423,12 +455,14 @@ All calculations must be handled in a **Transaction Service Layer**, not UI.
 
 # 25. Key Design Principles
 
-* Single source of truth (transactions)
-* Reusable UI components
-* Minimal duplication
-* Scalable transaction model
-* Clear separation of concerns
+* Pool is the central financial anchor
+* User balances represent obligation to pool
+* Transactions are simple, explicit, and event-based
+* No artificial balancing constraints
+* All balances are derived, never stored
 
 ---
 
 # END OF DOCUMENT
+
+ to do that next?

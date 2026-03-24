@@ -54,4 +54,14 @@ class TransactionRepository {
     _allTransactionsCache = null;
     _allTripsCache = null; // Clear both on refresh
   }
+
+  void addTransaction(Map<String, dynamic> tx) {
+    _allTransactionsCache ??= [];
+    _allTransactionsCache!.add(tx);
+  }
+
+  void addTrip(Map<String, dynamic> trip) {
+    _allTripsCache ??= [];
+    _allTripsCache!.add(trip);
+  }
 }

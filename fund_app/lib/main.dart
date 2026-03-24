@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'features/home/presentation/home_screen.dart';
+import 'features/home/presentation/widgets/multi_action_fab.dart';
 import 'features/personal/presentation/personal_screen.dart';
 import 'features/shared/presentation/shared_screen.dart';
+import 'features/shared/presentation/trip_form_screen.dart';
+import 'features/transactions/domain/transaction_model.dart';
+import 'features/transactions/presentation/transaction_form_screen.dart' hide TransactionType;
 
 void main() {
   // In the future, we will initialize Supabase here:
@@ -64,6 +68,33 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
           BottomNavigationBarItem(icon: Icon(Icons.group_outlined), label: 'Shared'),
         ],
       ),
+      floatingActionButton: MultiActionFab(
+        currentTabIndex: _currentIndex,
+        onAddShared: () => _openForm(context, TransactionType.sharedExpense),
+        onAddPersonal: () => _openForm(context, TransactionType.borrow),
+        onAddDeposit: () => _openForm(context, TransactionType.deposit),
+        onAddTrip: () => _openTripForm(context),
+      ),
     );
+  }
+
+
+  void _openForm(BuildContext context, TransactionType type) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => TransactionFormScreen(initialType: type)),
+    );
+  }
+
+  // New Trip Navigation
+  void _openTripForm(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const TripFormScreen()),
+    ).then((value) {
+      if (value == true) {
+        setState(() {}); // Refresh current screen to show new trip
+      }
+    });
   }
 }

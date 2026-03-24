@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'core/config/supabase_config.dart';
+import 'core/services/supabase_service.dart';
+import 'core/services/auth_service.dart';
 import 'features/home/presentation/home_screen.dart';
 import 'features/home/presentation/widgets/multi_action_fab.dart';
 import 'features/personal/presentation/personal_screen.dart';
@@ -7,9 +11,19 @@ import 'features/shared/presentation/trip_form_screen.dart';
 import 'features/transactions/domain/transaction_model.dart';
 import 'features/transactions/presentation/transaction_form_screen.dart' hide TransactionType;
 
-void main() {
-  // In the future, we will initialize Supabase here:
-  // await Supabase.initialize(url: ..., anonKey: ...);
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Supabase
+  await Supabase.initialize(
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
+  );
+
+  // Initialize services with the client
+  SupabaseService().initialize(Supabase.instance.client);
+  AuthService().initialize(Supabase.instance.client);
+
   runApp(const FUNdApp());
 }
 

@@ -36,6 +36,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   intl: ^0.20.2
   animate_icons: ^2.0.0
+  
+  # Supabase for backend integration
+  supabase_flutter: ^2.5.0
 
 dev_dependencies:
   flutter_test:

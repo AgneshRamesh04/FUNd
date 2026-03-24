@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../core/constants/demo_data.dart';
 import '../../../core/data/transaction_repository.dart';
+import '../../../core/models/transaction_model.dart' as core_models;
+import '../../../core/services/auth_service.dart';
 import '../domain/transaction_model.dart';
 
 class TransactionFormScreen extends StatefulWidget {
@@ -17,8 +18,8 @@ class TransactionFormScreen extends StatefulWidget {
 class _TransactionFormScreenState extends State<TransactionFormScreen> {
   final _amountController = TextEditingController();
   final _descController = TextEditingController();
-  final String _selectedUser = DemoData.userAId;
   DateTime _selectedDate = DateTime.now();
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -35,28 +36,16 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         elevation: 0,
         actions: [
           TextButton(
-            onPressed: () {
-                if (_amountController.text.isEmpty) return;
-
-                final newTx = {
-                    'id': DateTime.now().toString(),
-                    'type': widget.initialType == TransactionType.sharedExpense ? 'shared_expense' : 'borrow',
-                    'description': _descController.text.isEmpty ? 'Untitled' : _descController.text,
-                    'amount': double.tryParse(_amountController.text) ?? 0.0,
-                    'paid_by': _selectedUser,
-                    'received_by': widget.initialType == TransactionType.sharedExpense ? 'shared' : _selectedUser,
-                    'date': _selectedDate.toIso8601String(),
-                    'trip_id': widget.tripId, // Passed if adding from a trip page
-                };
-
-                TransactionRepository().addTransaction(newTx);
-                Navigator.pop(context, true); // Return true to indicate success
-            },
-            child: const Text("Save", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
+            onPressed: _isLoading ? null : _saveTransaction,
+            child: _isLoading 
+              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Text("Save", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
           ),
         ],
       ),
-      body: Padding(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
@@ -91,20 +80,80 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildChip("By ", _selectedUser == DemoData.userAId ? "User A" : "User B", Icons.person_outline, _showUserPicker),
-                const SizedBox(width: 12),
-                _buildChip("", DateFormat('MMM d').format(_selectedDate), Icons.calendar_today_outlined, _showDatePicker),
-              ],
+                      _buildChip("", DateFormat('MMM d').format(_selectedDate), Icons.calendar_today_outlined, _showDatePicker),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
     );
   }
 
-  Widget _buildTypeIcon() {
-    IconData icon = Icons.shopping_cart;
-    Color color = Colors.green.shade50;
+  Future<void> _saveTransaction() async {
+    if (_amountController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter an amount')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final authService = AuthService();
+      final currentUserId = authService.currentUserId;
+
+      if (currentUserId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User not authenticated')),
+        );
+        return;
+      }
+
+      // Determine transaction type string
+      String typeString = 'shared_expense';
+      if (widget.initialType == TransactionType.borrow) {
+        typeString = 'borrow';
+      } else if (widget.initialType == TransactionType.deposit) {
+        typeString = 'deposit';
+      }
+
+      // Create month_key for efficient querying
+      final monthKey = '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}';
+
+      // Create transaction model
+      final newTransaction = core_models.TransactionModel(
+        id: '', // Supabase will generate this
+        type: typeString,
+        userId: currentUserId,
+        description: _descController.text.isEmpty ? 'Untitled' : _descController.text,
+        amount: double.tryParse(_amountController.text) ?? 0.0,
+        date: _selectedDate,
+        notes: null,
+        tripId: widget.tripId,
+        monthKey: monthKey,
+      );
+
+      // Create transaction via repository
+      await TransactionRepository().createTransaction(newTransaction);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Transaction saved successfully')),
+        );
+        Navigator.pop(context, true); // Return true to indicate success
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
     Color iconColor = Colors.green;
 
     if (widget.initialType == TransactionType.borrow) {
@@ -135,9 +184,15 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     );
   }
 
-  void _showUserPicker() { /* Implement simple bottom sheet for A/B */ }
   void _showDatePicker() async {
-    final picked = await showDatePicker(context: context, initialDate: _selectedDate, firstDate: DateTime(2025), lastDate: DateTime(2027));
-    if (picked != null) setState(() => _selectedDate = picked);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2025),
+      lastDate: DateTime(2027),
+    );
+    if (picked != null) {
+      setState(() => _selectedDate = picked);
+    }
   }
 }

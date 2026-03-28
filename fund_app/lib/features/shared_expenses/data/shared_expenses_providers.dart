@@ -19,12 +19,29 @@ final poolMonthExpenseProvider =
       .fetchPoolMonthExpense(month);
 });
 
+// ── Pool summary total expense ────────────────────────────────────────────────
+
+final poolSummaryTotalProvider =
+    FutureProvider.family<double, DateTime>((ref, month) async {
+  return ref
+      .watch(sharedExpensesRepositoryProvider)
+      .fetchPoolSummaryTotal(month);
+});
+
 // ── Active trip ───────────────────────────────────────────────────────────────
 
 final activeTripProvider = FutureProvider<TripSummary?>((ref) async {
   return ref
       .watch(sharedExpensesRepositoryProvider)
       .fetchActiveTripSummary();
+});
+
+// ── All trips ─────────────────────────────────────────────────────────────────
+
+final allTripsProvider = FutureProvider<List<TripSummary>>((ref) async {
+  return ref
+      .watch(sharedExpensesRepositoryProvider)
+      .fetchAllTrips();
 });
 
 // ── Paginated shared transactions ─────────────────────────────────────────────

@@ -15,9 +15,9 @@ class SharedExpensesPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final poolExpenseAsync =
-        ref.watch(poolMonthExpenseProvider(selectedMonth));
+    final poolSummaryAsync = ref.watch(poolSummaryTotalProvider(selectedMonth));
     final tripAsync = ref.watch(activeTripProvider);
+    final allTripsAsync = ref.watch(allTripsProvider);
     final txState = ref.watch(sharedTransactionsProvider);
     final userNames = ref.watch(sharedUserNamesProvider).value ?? {};
 
@@ -26,14 +26,13 @@ class SharedExpensesPage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Section 1: Pool expenses this month ───────────────────────
-          Text('POOL EXPENSES', style: theme.textTheme.labelMedium),
+          // ── Section 1: Total shared expense for the month ─────────────────
+          Text('SHARED THIS MONTH', style: theme.textTheme.labelMedium),
           const SizedBox(height: 10),
-          poolExpenseAsync.when(
-            data: (data) => _PoolMonthCard(
+          poolSummaryAsync.when(
+            data: (total) => _PoolSummaryCard(
               month: selectedMonth,
-              contributed: data['contributed'] ?? 0,
-              spent: data['spent'] ?? 0,
+              totalExpense: total,
             ),
             loading: () => const LinearProgressIndicator(),
             error: (e, _) => _ErrorText('$e'),
@@ -44,8 +43,77 @@ class SharedExpensesPage extends ConsumerWidget {
           Text('ACTIVE TRIP', style: theme.textTheme.labelMedium),
           const SizedBox(height: 10),
           tripAsync.when(
-            data: (trip) =>
-                trip != null ? _TripCard(trip: trip) : _NoTripCard(),
+            data: (trip) => trip != null
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _TripCard(trip: trip),
+                      const SizedBox(height: 12),
+                      allTripsAsync.when(
+                        data: (trips) {
+                          if (trips.length <= 1) return const SizedBox.shrink();
+                          return SizedBox(
+                            height: 40,
+                            child: TextButton(
+                              onPressed: () =>
+                                  _showAllTripsModal(context, trips, theme),
+                              style: TextButton.styleFrom(
+                                backgroundColor:
+                                    AppTheme.accent.withValues(alpha: 0.1),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: Text(
+                                'View all trips',
+                                style: TextStyle(
+                                  color: AppTheme.accent,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, __) => const SizedBox.shrink(),
+                      ),
+                    ],
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _NoTripCard(),
+                      const SizedBox(height: 12),
+                      allTripsAsync.when(
+                        data: (trips) {
+                          if (trips.isEmpty) return const SizedBox.shrink();
+                          return SizedBox(
+                            height: 40,
+                            child: TextButton(
+                              onPressed: () =>
+                                  _showAllTripsModal(context, trips, theme),
+                              style: TextButton.styleFrom(
+                                backgroundColor:
+                                    AppTheme.accent.withValues(alpha: 0.1),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: Text(
+                                'View all trips',
+                                style: TextStyle(
+                                  color: AppTheme.accent,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, __) => const SizedBox.shrink(),
+                      ),
+                    ],
+                  ),
             loading: () => const LinearProgressIndicator(),
             error: (e, _) => _ErrorText('$e'),
           ),
@@ -159,6 +227,55 @@ class SharedExpensesPage extends ConsumerWidget {
     );
   }
 
+  void _showAllTripsModal(
+      BuildContext context, List<TripSummary> trips, ThemeData theme) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'All Trips',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (trips.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 32),
+                  child: Center(
+                    child: Text(
+                      'No trips found',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.textTheme.labelMedium?.color,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Column(
+                  children: List.generate(trips.length, (i) {
+                    final trip = trips[i];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _TripCard(trip: trip),
+                    );
+                  }),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   String _monthLabel(String key) {
     try {
       final parts = key.split('-');
@@ -170,25 +287,21 @@ class SharedExpensesPage extends ConsumerWidget {
   }
 }
 
-// ── Pool month summary card ───────────────────────────────────────────────────
+// ── Pool summary card ────────────────────────────────────────────────────────
 
-class _PoolMonthCard extends StatelessWidget {
-  const _PoolMonthCard({
+class _PoolSummaryCard extends StatelessWidget {
+  const _PoolSummaryCard({
     required this.month,
-    required this.contributed,
-    required this.spent,
+    required this.totalExpense,
   });
 
   final DateTime month;
-  final double contributed;
-  final double spent;
+  final double totalExpense;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final fmt = NumberFormat('#,##0.00');
-    final net = contributed - spent;
-    final netPositive = net >= 0;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -202,75 +315,19 @@ class _PoolMonthCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('CONTRIBUTED',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                            color: AppTheme.positive,
-                            fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 4),
-                    Text(
-                      '+SGD ${fmt.format(contributed)}',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: AppTheme.positive,
-                        fontWeight: FontWeight.w700,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                  width: 1,
-                  height: 36,
-                  color: theme.dividerTheme.color),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('SPENT',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                              color: AppTheme.negative,
-                              fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 4),
-                      Text(
-                        '-SGD ${fmt.format(spent)}',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: AppTheme.negative,
-                          fontWeight: FontWeight.w700,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            'SGD ${fmt.format(totalExpense)}',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
           ),
-          const SizedBox(height: 14),
-          Divider(height: 1, thickness: 1, color: theme.dividerTheme.color),
-          const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Net for ${DateFormat.yMMMM().format(month)}',
-                  style: theme.textTheme.labelSmall
-                      ?.copyWith(color: theme.textTheme.labelMedium?.color)),
-              Text(
-                '${netPositive ? '+' : ''}SGD ${fmt.format(net)}',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: netPositive ? AppTheme.positive : AppTheme.negative,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
-            ],
+          const SizedBox(height: 8),
+          Text(
+            'Total expenses for ${DateFormat.MMMM().format(month)}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.textTheme.labelMedium?.color,
+            ),
           ),
         ],
       ),

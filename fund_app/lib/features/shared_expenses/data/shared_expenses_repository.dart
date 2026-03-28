@@ -39,6 +39,26 @@ class SharedExpensesRepository {
     }
   }
 
+  /// Fetches the total shared expense for the month from pool_summary table.
+  Future<double> fetchPoolSummaryTotal(DateTime month) async {
+    try {
+      final monthStr = DateUtils.toMonthKey(month);
+      print("fetching pool summary total for month: $monthStr");
+      final data = await supabase
+          .from('pool_summary')
+          .select('shared_expense')
+          .eq('month', monthStr)
+          .limit(1);
+
+      print("pool summary total response: $data");
+
+      if ((data as List).isEmpty) return 0.0;
+      return (data.first['shared_expense'] as num?)?.toDouble() ?? 0.0;
+    } catch (e, st) {
+      throw AppException.fromError(e, st);
+    }
+  }
+
   /// Returns the most relevant trip: ongoing → nearest upcoming → most recent past.
   Future<TripSummary?> fetchActiveTripSummary() async {
     try {
@@ -94,6 +114,23 @@ class SharedExpensesRepository {
           .range(offset, offset + pageSize - 1);
       return (data as List)
           .map((e) => SharedTransaction.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e, st) {
+      throw AppException.fromError(e, st);
+    }
+  }
+
+  /// Fetches all trips from trip_summary, sorted by start_date descending.
+  Future<List<TripSummary>> fetchAllTrips() async {
+    try {
+      final data = await supabase
+          .from('trip_summary')
+          .select(
+              'trip_id, trip_name, start_date, end_date, duration_days, total_expense')
+          .order('start_date', ascending: false);
+
+      return (data as List)
+          .map((e) => TripSummary.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e, st) {
       throw AppException.fromError(e, st);

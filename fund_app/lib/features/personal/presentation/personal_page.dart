@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../home/data/home_models.dart';
 import '../../home/data/home_providers.dart';
-import '../../home/presentation/widgets/debt_card.dart';
 import '../data/personal_providers.dart';
 import 'widgets/transaction_tile.dart';
 
@@ -24,13 +23,80 @@ class PersonalPage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Member debts ──────────────────────────────────────────────
-          Text('MEMBER DEBTS', style: theme.textTheme.labelMedium),
+          // ── Total owed to pool ────────────────────────────────────────────
+          Text('TOTAL OWED TO POOL', style: theme.textTheme.labelMedium),
           const SizedBox(height: 10),
-          DebtCard(
-            debts: debts
-                .map((d) => Debt(userName: d.userName, amount: d.amount))
-                .toList(),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: theme.cardTheme.color,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: theme.dividerTheme.color ?? Colors.transparent,
+              ),
+            ),
+            child: Builder(
+              builder: (context) {
+                if (debts.isEmpty) {
+                  return Text(
+                    'No debts',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.textTheme.labelMedium?.color,
+                    ),
+                  );
+                }
+                
+                final totalDebt = debts.fold<double>(0, (sum, d) => sum + d.amount);
+                final fmt = NumberFormat('#,##0.00');
+                
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'SGD ${fmt.format(totalDebt)}',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ...List.generate(debts.length, (i) {
+                      final d = debts[i];
+                      final isLast = i == debts.length - 1;
+                      return Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                d.userName,
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                              Text(
+                                'SGD ${fmt.format(d.amount)}',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  fontFeatures: const [FontFeature.tabularFigures()],
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (!isLast) ...[
+                            const SizedBox(height: 12),
+                            Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: theme.dividerTheme.color,
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                        ],
+                      );
+                    }),
+                  ],
+                );
+              },
+            ),
           ),
           const SizedBox(height: 28),
 

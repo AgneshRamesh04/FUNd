@@ -70,6 +70,7 @@ class _ShellPageState extends ConsumerState<ShellPage>
       ref.invalidate(personalTransactionsProvider);
       ref.invalidate(personalUserNamesProvider);
       ref.invalidate(poolMonthExpenseProvider);
+      ref.invalidate(poolSummaryTotalProvider);
       ref.invalidate(activeTripProvider);
       ref.invalidate(sharedTransactionsProvider);
       ref.invalidate(sharedUserNamesProvider);
@@ -86,9 +87,10 @@ class _ShellPageState extends ConsumerState<ShellPage>
     final userAsync = ref.watch(currentUserProvider);
     return Scaffold(
       appBar: AppBar(
+        centerTitle: false,
         automaticallyImplyLeading: false,
         titleSpacing: 0,
-        title: _currentIndex == 0
+        title: (_currentIndex == 0 || _currentIndex == 2)
             ? GestureDetector(
                 onTap: _pickMonth,
                 child: Padding(
@@ -113,7 +115,7 @@ class _ShellPageState extends ConsumerState<ShellPage>
             : Padding(
                 padding: const EdgeInsets.only(left: 20.0),
                 child: Text(
-                  _currentIndex == 1 ? 'Personal' : 'Shared',
+                  'Personal',
                   style: theme.textTheme.titleLarge,
                 ),
               ),

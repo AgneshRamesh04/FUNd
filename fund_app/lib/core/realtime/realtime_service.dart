@@ -35,6 +35,9 @@ class RealtimeService {
               _ref.invalidate(personalTransactionsProvider);
               _ref.invalidate(poolMonthExpenseProvider);
               _ref.invalidate(sharedTransactionsProvider);
+              _ref.invalidate(activeTripProvider);
+              _ref.invalidate(allTripsProvider);
+              _ref.invalidate(poolSummaryTotalProvider);
             },
           )
           .subscribe(),
@@ -50,6 +53,7 @@ class RealtimeService {
             table: 'trips',
             callback: (_) {
               _ref.invalidate(activeTripProvider);
+              _ref.invalidate(allTripsProvider);
             },
           )
           .subscribe(),

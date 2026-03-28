@@ -17,10 +17,23 @@ void main() async {
     debugPrint('Note: .env file not found. Falling back to system environment variables.');
   }
 
-  final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? 
-      const String.fromEnvironment('SUPABASE_URL');
-  final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? 
-      const String.fromEnvironment('SUPABASE_ANON_KEY');
+  // Safely retrieve environment variables with fallbacks
+  String supabaseUrl = '';
+  String supabaseAnonKey = '';
+  
+  try {
+    supabaseUrl = dotenv.env['SUPABASE_URL'] ?? 
+        const String.fromEnvironment('SUPABASE_URL');
+    supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? 
+        const String.fromEnvironment('SUPABASE_ANON_KEY');
+
+    debugPrint("--- ${supabaseUrl} \n--- ${supabaseAnonKey}");
+  } catch (e) {
+    // If dotenv is not initialized, try const from environment
+    debugPrint("\n\n--- i am not where i wanna be\n\n");
+    supabaseUrl = const String.fromEnvironment('SUPABASE_URL');
+    supabaseAnonKey = const String.fromEnvironment('SUPABASE_ANON_KEY');
+  }
 
   if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
     throw Exception(

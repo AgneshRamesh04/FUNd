@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../home/data/home_models.dart';
+import '../../../core/utils/username_utils.dart';
+
 import '../../home/data/home_providers.dart';
+import '../../../shared/providers/current_user_provider.dart';
 import '../data/personal_providers.dart';
 import 'widgets/transaction_tile.dart';
 
@@ -17,14 +19,19 @@ class PersonalPage extends ConsumerWidget {
     final debts = ref.watch(userDebtsProvider).value ?? [];
     final txState = ref.watch(personalTransactionsProvider);
     final userNames = ref.watch(personalUserNamesProvider).value ?? {};
+    final currentUserAsync = ref.watch(currentUserProvider);
+    final currentUserId = currentUserAsync.maybeWhen(
+      data: (user) => user.id,
+      orElse: () => '',
+    );
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Total owed to pool ────────────────────────────────────────────
-          Text('TOTAL OWED TO POOL', style: theme.textTheme.labelMedium),
+          // ── Total owed to FUNd ────────────────────────────────────────────
+          Text('TOTAL OWED TO FUNd', style: theme.textTheme.labelMedium),
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.all(20),
@@ -69,7 +76,7 @@ class PersonalPage extends ConsumerWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                d.userName,
+                                getDisplayName(d.userId, currentUserId, userNames),
                                 style: theme.textTheme.bodyMedium,
                               ),
                               Text(
@@ -176,8 +183,11 @@ class PersonalPage extends ConsumerWidget {
                             children: List.generate(group.length, (i) {
                               return TransactionTile(
                                 tx: group[i],
-                                userName:
-                                    userNames[group[i].userId] ?? 'Unknown',
+                                userName: getDisplayName(
+                                  group[i].userId,
+                                  currentUserId,
+                                  userNames,
+                                ),
                                 showDivider: i < group.length - 1,
                               );
                             }),

@@ -18,6 +18,7 @@ class UserDebt with _$UserDebt {
 @freezed
 class Debt with _$Debt {
   const factory Debt({
+    required String? userId,
     required String userName,
     required double amount,
   }) = _Debt;

@@ -232,6 +232,7 @@ Debt _$DebtFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Debt {
+  String? get userId => throw _privateConstructorUsedError;
   String get userName => throw _privateConstructorUsedError;
   double get amount => throw _privateConstructorUsedError;
 
@@ -249,7 +250,7 @@ abstract class $DebtCopyWith<$Res> {
   factory $DebtCopyWith(Debt value, $Res Function(Debt) then) =
       _$DebtCopyWithImpl<$Res, Debt>;
   @useResult
-  $Res call({String userName, double amount});
+  $Res call({String? userId, String userName, double amount});
 }
 
 /// @nodoc
@@ -266,9 +267,17 @@ class _$DebtCopyWithImpl<$Res, $Val extends Debt>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? userName = null, Object? amount = null}) {
+  $Res call({
+    Object? userId = freezed,
+    Object? userName = null,
+    Object? amount = null,
+  }) {
     return _then(
       _value.copyWith(
+            userId: freezed == userId
+                ? _value.userId
+                : userId // ignore: cast_nullable_to_non_nullable
+                      as String?,
             userName: null == userName
                 ? _value.userName
                 : userName // ignore: cast_nullable_to_non_nullable
@@ -291,7 +300,7 @@ abstract class _$$DebtImplCopyWith<$Res> implements $DebtCopyWith<$Res> {
   ) = __$$DebtImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String userName, double amount});
+  $Res call({String? userId, String userName, double amount});
 }
 
 /// @nodoc
@@ -305,9 +314,17 @@ class __$$DebtImplCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? userName = null, Object? amount = null}) {
+  $Res call({
+    Object? userId = freezed,
+    Object? userName = null,
+    Object? amount = null,
+  }) {
     return _then(
       _$DebtImpl(
+        userId: freezed == userId
+            ? _value.userId
+            : userId // ignore: cast_nullable_to_non_nullable
+                  as String?,
         userName: null == userName
             ? _value.userName
             : userName // ignore: cast_nullable_to_non_nullable
@@ -324,11 +341,17 @@ class __$$DebtImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$DebtImpl implements _Debt {
-  const _$DebtImpl({required this.userName, required this.amount});
+  const _$DebtImpl({
+    required this.userId,
+    required this.userName,
+    required this.amount,
+  });
 
   factory _$DebtImpl.fromJson(Map<String, dynamic> json) =>
       _$$DebtImplFromJson(json);
 
+  @override
+  final String? userId;
   @override
   final String userName;
   @override
@@ -336,7 +359,7 @@ class _$DebtImpl implements _Debt {
 
   @override
   String toString() {
-    return 'Debt(userName: $userName, amount: $amount)';
+    return 'Debt(userId: $userId, userName: $userName, amount: $amount)';
   }
 
   @override
@@ -344,6 +367,7 @@ class _$DebtImpl implements _Debt {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$DebtImpl &&
+            (identical(other.userId, userId) || other.userId == userId) &&
             (identical(other.userName, userName) ||
                 other.userName == userName) &&
             (identical(other.amount, amount) || other.amount == amount));
@@ -351,7 +375,7 @@ class _$DebtImpl implements _Debt {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, userName, amount);
+  int get hashCode => Object.hash(runtimeType, userId, userName, amount);
 
   /// Create a copy of Debt
   /// with the given fields replaced by the non-null parameter values.
@@ -369,12 +393,15 @@ class _$DebtImpl implements _Debt {
 
 abstract class _Debt implements Debt {
   const factory _Debt({
+    required final String? userId,
     required final String userName,
     required final double amount,
   }) = _$DebtImpl;
 
   factory _Debt.fromJson(Map<String, dynamic> json) = _$DebtImpl.fromJson;
 
+  @override
+  String? get userId;
   @override
   String get userName;
   @override

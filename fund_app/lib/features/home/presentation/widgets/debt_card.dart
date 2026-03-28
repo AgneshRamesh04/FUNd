@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/username_utils.dart';
 import '../../data/home_models.dart';
 
 class DebtCard extends StatelessWidget {
   final List<Debt> debts;
+  final String currentUserId;
 
-  const DebtCard({super.key, required this.debts});
+  const DebtCard({super.key, required this.debts, required this.currentUserId});
 
   @override
   Widget build(BuildContext context) {
@@ -61,9 +63,15 @@ class DebtCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text(d.userName,
-                            style: theme.textTheme.bodyMedium
-                                ?.copyWith(fontWeight: FontWeight.w500)),
+                        child: Text(
+                          getDisplayName(
+                            d.userId ?? '',
+                            currentUserId,
+                            {d.userId ?? '': d.userName},
+                          ),
+                          style: theme.textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w500),
+                        ),
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,

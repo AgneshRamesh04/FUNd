@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/username_utils.dart';
 
 class LeaveCard extends StatelessWidget {
+  final String userId;
   final String userName;
   final int used;
   final int total;
+  final String currentUserId;
 
   const LeaveCard({
     super.key,
+    required this.userId,
     required this.userName,
     required this.used,
     required this.total,
+    required this.currentUserId,
   });
 
   @override
@@ -45,7 +50,11 @@ class LeaveCard extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  userName.isNotEmpty ? userName[0].toUpperCase() : '?',
+                  getDisplayName(userId, currentUserId, {userId: userName})
+                      .isNotEmpty
+                      ? getDisplayName(userId, currentUserId, {userId: userName})[0]
+                          .toUpperCase()
+                      : '?',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -56,7 +65,7 @@ class LeaveCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  userName,
+                  getDisplayName(userId, currentUserId, {userId: userName}),
                   style: theme.textTheme.bodyMedium
                       ?.copyWith(fontWeight: FontWeight.w500),
                   overflow: TextOverflow.ellipsis,

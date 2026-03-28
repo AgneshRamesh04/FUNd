@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/username_utils.dart';
+import '../../../shared/providers/current_user_provider.dart';
 import '../data/shared_expenses_models.dart';
 import '../data/shared_expenses_providers.dart';
 import 'widgets/shared_transaction_tile.dart';
@@ -20,6 +22,11 @@ class SharedExpensesPage extends ConsumerWidget {
     final allTripsAsync = ref.watch(allTripsProvider);
     final txState = ref.watch(sharedTransactionsProvider);
     final userNames = ref.watch(sharedUserNamesProvider).value ?? {};
+    final currentUserAsync = ref.watch(currentUserProvider);
+    final currentUserId = currentUserAsync.maybeWhen(
+      data: (user) => user.id,
+      orElse: () => '',
+    );
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
@@ -183,8 +190,11 @@ class SharedExpensesPage extends ConsumerWidget {
                           children: List.generate(group.length, (i) {
                             return SharedTransactionTile(
                               tx: group[i],
-                              userName:
-                                  userNames[group[i].userId] ?? 'Unknown',
+                              userName: getDisplayName(
+                                group[i].userId,
+                                currentUserId,
+                                userNames,
+                              ),
                               showDivider: i < group.length - 1,
                             );
                           }),

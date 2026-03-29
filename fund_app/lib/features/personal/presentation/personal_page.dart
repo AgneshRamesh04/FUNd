@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/username_utils.dart';
+import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/skeleton_loader.dart';
 
 import '../../home/data/home_providers.dart';
 import '../../../shared/providers/current_user_provider.dart';
@@ -115,25 +117,19 @@ class PersonalPage extends ConsumerWidget {
           // ── Transactions ──────────────────────────────────────────────
           Text('PERSONAL TRANSACTIONS', style: theme.textTheme.labelMedium),
           const SizedBox(height: 12),
-
           Builder(
             builder: (_) {
               if (txState.isLoading) {
-                return const Padding(
-                  padding: EdgeInsets.only(top: 4),
-                  child: LinearProgressIndicator(),
-                );
+                return const TransactionListSkeleton();
               }
               if (txState.error != null) {
-                return Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    'Error: ${txState.error}',
-                    style: const TextStyle(color: AppTheme.negative),
-                  ),
+                return ErrorState(
+                  message: txState.error ?? 'Failed to load transactions',
                 );
               }
-              if (txState.transactions.isEmpty) return _EmptyState();
+              if (txState.transactions.isEmpty) {
+                return const TransactionEmptyState();
+              }
 
               // Transactions are already filtered by the provider (backend query)
               return Container(

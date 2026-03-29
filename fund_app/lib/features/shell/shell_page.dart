@@ -26,6 +26,7 @@ class ShellPage extends ConsumerStatefulWidget {
 class _ShellPageState extends ConsumerState<ShellPage>
     with WidgetsBindingObserver {
   int _currentIndex = 0;
+  late PageController _pageController;
   late RealtimeService _realtime;
   late DateTime _selectedMonth;
   // Only build a tab's page once it has actually been visited.
@@ -37,6 +38,7 @@ class _ShellPageState extends ConsumerState<ShellPage>
     super.initState();
     final now = DateTime.now();
     _selectedMonth = DateTime(now.year, now.month);
+    _pageController = PageController();
     WidgetsBinding.instance.addObserver(this);
     // Capture before any possible disposal so dispose() never touches ref.
     _realtime = ref.read(realtimeServiceProvider);
@@ -53,12 +55,25 @@ class _ShellPageState extends ConsumerState<ShellPage>
     if (picked != null) setState(() => _selectedMonth = picked);
   }
 
+  void _previousMonth() {
+    setState(() {
+      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month - 1);
+    });
+  }
+
+  void _nextMonth() {
+    setState(() {
+      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
+    });
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     // Use the cached reference — ref is no longer safe to call here.
     // Fire-and-forget: unsubscribe must complete before widget destruction
     unawaited(_realtime.unsubscribe());
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -93,27 +108,65 @@ class _ShellPageState extends ConsumerState<ShellPage>
         centerTitle: false,
         automaticallyImplyLeading: false,
         titleSpacing: 0,
-        title: GestureDetector(
-                onTap: _pickMonth,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 20.0),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        DateFormat.yMMMM().format(_selectedMonth),
-                        style: theme.textTheme.titleLarge,
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        size: 20,
-                        color: theme.textTheme.labelMedium?.color,
-                      ),
-                    ],
+        title: Padding(
+          padding: const EdgeInsets.only(left: 20.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Previous month button ──
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  icon: Icon(
+                    Icons.arrow_left_rounded,
+                    size: 20,
+                    color: theme.textTheme.labelMedium?.color,
                   ),
+                  onPressed: _previousMonth,
+                  tooltip: 'Previous month',
                 ),
               ),
+              const SizedBox(width: 4),
+              // ── Month selector (tap to open picker) ──
+              GestureDetector(
+                onTap: _pickMonth,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      DateFormat.yMMMM().format(_selectedMonth),
+                      style: theme.textTheme.titleLarge,
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.expand_more_rounded,
+                      size: 20,
+                      color: theme.textTheme.labelMedium?.color,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4),
+              // ── Next month button ──
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  icon: Icon(
+                    Icons.arrow_right_rounded,
+                    size: 20,
+                    color: theme.textTheme.labelMedium?.color,
+                  ),
+                  onPressed: _nextMonth,
+                  tooltip: 'Next month',
+                ),
+              ),
+            ],
+          ),
+        ),
         actions: [
           userAsync.maybeWhen(
             data: (user) {
@@ -157,8 +210,14 @@ class _ShellPageState extends ConsumerState<ShellPage>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: const Icon(Icons.add_rounded),
       ),
-      body: IndexedStack(
-        index: _currentIndex,
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() {
+            _initializedTabs.add(index);
+            _currentIndex = index;
+          });
+        },
         children: [
           HomePage(selectedMonth: _selectedMonth),
           _initializedTabs.contains(1)
@@ -181,10 +240,17 @@ class _ShellPageState extends ConsumerState<ShellPage>
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
-          onTap: (i) => setState(() {
-            _initializedTabs.add(i);
-            _currentIndex = i;
-          }),
+          onTap: (i) {
+            setState(() {
+              _initializedTabs.add(i);
+              _currentIndex = i;
+            });
+            _pageController.animateToPage(
+              i,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            );
+          },
           backgroundColor: Colors.transparent,
           elevation: 0,
           items: const [

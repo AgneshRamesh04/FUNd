@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/username_utils.dart';
 import '../../../shared/providers/current_user_provider.dart';
+import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/skeleton_loader.dart';
 import '../data/shared_expenses_models.dart';
 import '../data/shared_expenses_providers.dart';
 import 'widgets/shared_transaction_tile.dart';
@@ -44,7 +46,7 @@ class SharedExpensesPage extends ConsumerWidget {
               totalExpense: total,
             ),
             loading: () => const LinearProgressIndicator(),
-            error: (e, _) => _ErrorText('$e'),
+            error: (e, _) => ErrorState(message: '$e'),
           ),
           const SizedBox(height: 28),
 
@@ -84,7 +86,7 @@ class SharedExpensesPage extends ConsumerWidget {
                           );
                         },
                         loading: () => const SizedBox.shrink(),
-                        error: (_, __) => const SizedBox.shrink(),
+                        error: (_, _) => const SizedBox.shrink(),
                       ),
                     ],
                   )
@@ -119,12 +121,12 @@ class SharedExpensesPage extends ConsumerWidget {
                           );
                         },
                         loading: () => const SizedBox.shrink(),
-                        error: (_, __) => const SizedBox.shrink(),
+                        error: (_, _) => const SizedBox.shrink(),
                       ),
                     ],
                   ),
             loading: () => const LinearProgressIndicator(),
-            error: (e, _) => _ErrorText('$e'),
+            error: (e, _) => ErrorState(message: '$e'),
           ),
           const SizedBox(height: 28),
 
@@ -133,13 +135,16 @@ class SharedExpensesPage extends ConsumerWidget {
           const SizedBox(height: 12),
           Builder(builder: (_) {
             if (txState.isLoading) {
-              return const Padding(
-                padding: EdgeInsets.only(top: 4),
-                child: LinearProgressIndicator(),
+              return const TransactionListSkeleton();
+            }
+            if (txState.error != null) {
+              return ErrorState(
+                message: txState.error ?? 'Failed to load transactions',
               );
             }
-            if (txState.error != null) return _ErrorText(txState.error!);
-            if (txState.transactions.isEmpty) return _EmptyState();
+            if (txState.transactions.isEmpty) {
+              return const TransactionEmptyState();
+            }
 
             // Transactions are already filtered by the provider (backend query)
             return Container(
@@ -419,44 +424,4 @@ class _NoTripCard extends StatelessWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 48),
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.dividerTheme.color ?? Colors.transparent,
-        ),
-      ),
-      child: Column(
-        children: [
-          Icon(Icons.receipt_long_outlined,
-              size: 36,
-              color: theme.textTheme.labelMedium?.color),
-          const SizedBox(height: 12),
-          Text(
-            'No shared expenses',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.textTheme.labelMedium?.color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
-class _ErrorText extends StatelessWidget {
-  const _ErrorText(this.message);
-  final String message;
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text('Error: $message',
-            style: const TextStyle(color: AppTheme.negative)),
-      );
-}

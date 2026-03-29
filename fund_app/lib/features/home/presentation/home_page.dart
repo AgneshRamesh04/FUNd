@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/providers/current_user_provider.dart';
+import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/skeleton_loader.dart';
 import '../data/home_models.dart';
 import '../data/home_providers.dart';
 import 'widgets/debt_card.dart';
@@ -17,13 +19,12 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final poolBalance = ref.watch(poolBalanceProvider).value ?? 0.0;
-    final debts = ref.watch(userDebtsProvider).value ?? [];
+    final poolBalanceAsync = ref.watch(poolBalanceProvider);
+    final debtsAsync = ref.watch(userDebtsProvider);
     final leaves =
         ref.watch(userLeavesProvider(selectedMonth.year)).value ?? [];
-    final inflowOutflow =
-        ref.watch(inflowOutflowProvider(selectedMonth)).value ??
-            {'inflow': 0.0, 'outflow': 0.0};
+    final inflowOutflowAsync =
+        ref.watch(inflowOutflowProvider(selectedMonth));
     final currentUserAsync = ref.watch(currentUserProvider);
     final currentUserId = currentUserAsync.maybeWhen(
       data: (user) => user.id,
@@ -35,38 +36,68 @@ class HomePage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          PoolBalanceCard(balance: poolBalance),
+          // Pool Balance Card
+          poolBalanceAsync.when(
+            data: (balance) => PoolBalanceCard(balance: balance),
+            loading: () => const CardSkeleton(),
+            error: (e, st) => ErrorState(
+              message: e.toString(),
+            ),
+          ),
           const SizedBox(height: 16),
+          // Inflow/Outflow Cards
           Row(
             children: [
               Expanded(
-                child: InflowOutflowCard(
-                  title: 'INFLOW',
-                  amount: inflowOutflow['inflow'] ?? 0.0,
-                  positive: true,
+                child: inflowOutflowAsync.when(
+                  data: (inflowOutflow) => InflowOutflowCard(
+                    title: 'INFLOW',
+                    amount: inflowOutflow['inflow'] ?? 0.0,
+                    positive: true,
+                  ),
+                  loading: () => const CardSkeleton(),
+                  error: (e, st) => ErrorState(
+                    message: e.toString(),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: InflowOutflowCard(
-                  title: 'OUTFLOW',
-                  amount: inflowOutflow['outflow'] ?? 0.0,
-                  positive: false,
+                child: inflowOutflowAsync.when(
+                  data: (inflowOutflow) => InflowOutflowCard(
+                    title: 'OUTFLOW',
+                    amount: inflowOutflow['outflow'] ?? 0.0,
+                    positive: false,
+                  ),
+                  loading: () => const CardSkeleton(),
+                  error: (e, st) => ErrorState(
+                    message: e.toString(),
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          DebtCard(
-            debts: debts
-                .map((d) => Debt(
-                  userId: d.userId,
-                  userName: d.userName,
-                  amount: d.amount,
-                ))
-                .toList(),
-            currentUserId: currentUserId,
+          // Debt Card
+          debtsAsync.when(
+            data: (debts) => debts.isEmpty
+                ? const DebtEmptyState()
+                : DebtCard(
+                    debts: debts
+                        .map((d) => Debt(
+                          userId: d.userId,
+                          userName: d.userName,
+                          amount: d.amount,
+                        ))
+                        .toList(),
+                    currentUserId: currentUserId,
+                  ),
+            loading: () => const CardSkeleton(),
+            error: (e, st) => ErrorState(
+              message: e.toString(),
+            ),
           ),
+          // Leave Tracker
           if (leaves.isNotEmpty) ...[
             const SizedBox(height: 16),
             Text('LEAVE TRACKER', style: theme.textTheme.labelMedium),

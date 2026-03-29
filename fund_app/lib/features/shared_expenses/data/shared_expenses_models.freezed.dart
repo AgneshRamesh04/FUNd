@@ -21,9 +21,10 @@ SharedTransaction _$SharedTransactionFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$SharedTransaction {
-  String get id => throw _privateConstructorUsedError;
+  String get id =>
+      throw _privateConstructorUsedError; // user_id can be null for pool_expense type transactions which are not tied to any user.
   @JsonKey(name: 'user_id')
-  String get userId => throw _privateConstructorUsedError;
+  String? get userId => throw _privateConstructorUsedError;
   String get type =>
       throw _privateConstructorUsedError; // 'user_paid_for_pool' | 'pool_expense'
   double get amount => throw _privateConstructorUsedError;
@@ -52,7 +53,7 @@ abstract class $SharedTransactionCopyWith<$Res> {
   @useResult
   $Res call({
     String id,
-    @JsonKey(name: 'user_id') String userId,
+    @JsonKey(name: 'user_id') String? userId,
     String type,
     double amount,
     String? description,
@@ -78,7 +79,7 @@ class _$SharedTransactionCopyWithImpl<$Res, $Val extends SharedTransaction>
   @override
   $Res call({
     Object? id = null,
-    Object? userId = null,
+    Object? userId = freezed,
     Object? type = null,
     Object? amount = null,
     Object? description = freezed,
@@ -92,10 +93,10 @@ class _$SharedTransactionCopyWithImpl<$Res, $Val extends SharedTransaction>
                 ? _value.id
                 : id // ignore: cast_nullable_to_non_nullable
                       as String,
-            userId: null == userId
+            userId: freezed == userId
                 ? _value.userId
                 : userId // ignore: cast_nullable_to_non_nullable
-                      as String,
+                      as String?,
             type: null == type
                 ? _value.type
                 : type // ignore: cast_nullable_to_non_nullable
@@ -137,7 +138,7 @@ abstract class _$$SharedTransactionImplCopyWith<$Res>
   @useResult
   $Res call({
     String id,
-    @JsonKey(name: 'user_id') String userId,
+    @JsonKey(name: 'user_id') String? userId,
     String type,
     double amount,
     String? description,
@@ -162,7 +163,7 @@ class __$$SharedTransactionImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? userId = null,
+    Object? userId = freezed,
     Object? type = null,
     Object? amount = null,
     Object? description = freezed,
@@ -176,10 +177,10 @@ class __$$SharedTransactionImplCopyWithImpl<$Res>
             ? _value.id
             : id // ignore: cast_nullable_to_non_nullable
                   as String,
-        userId: null == userId
+        userId: freezed == userId
             ? _value.userId
             : userId // ignore: cast_nullable_to_non_nullable
-                  as String,
+                  as String?,
         type: null == type
             ? _value.type
             : type // ignore: cast_nullable_to_non_nullable
@@ -214,7 +215,7 @@ class __$$SharedTransactionImplCopyWithImpl<$Res>
 class _$SharedTransactionImpl extends _SharedTransaction {
   const _$SharedTransactionImpl({
     required this.id,
-    @JsonKey(name: 'user_id') required this.userId,
+    @JsonKey(name: 'user_id') this.userId,
     required this.type,
     required this.amount,
     this.description,
@@ -228,9 +229,10 @@ class _$SharedTransactionImpl extends _SharedTransaction {
 
   @override
   final String id;
+  // user_id can be null for pool_expense type transactions which are not tied to any user.
   @override
   @JsonKey(name: 'user_id')
-  final String userId;
+  final String? userId;
   @override
   final String type;
   // 'user_paid_for_pool' | 'pool_expense'
@@ -302,7 +304,7 @@ class _$SharedTransactionImpl extends _SharedTransaction {
 abstract class _SharedTransaction extends SharedTransaction {
   const factory _SharedTransaction({
     required final String id,
-    @JsonKey(name: 'user_id') required final String userId,
+    @JsonKey(name: 'user_id') final String? userId,
     required final String type,
     required final double amount,
     final String? description,
@@ -316,10 +318,10 @@ abstract class _SharedTransaction extends SharedTransaction {
       _$SharedTransactionImpl.fromJson;
 
   @override
-  String get id;
+  String get id; // user_id can be null for pool_expense type transactions which are not tied to any user.
   @override
   @JsonKey(name: 'user_id')
-  String get userId;
+  String? get userId;
   @override
   String get type; // 'user_paid_for_pool' | 'pool_expense'
   @override

@@ -99,8 +99,9 @@ class SharedExpensesRepository {
     }
   }
 
-  /// Paginated shared transactions with no trip assignment (trip_id IS NULL).
+  /// Paginated shared transactions for a specific month with no trip assignment (trip_id IS NULL).
   Future<List<SharedTransaction>> fetchSharedTransactions({
+    required String monthKey,
     int offset = 0,
   }) async {
     try {
@@ -109,6 +110,7 @@ class SharedExpensesRepository {
           .select(
               'id, type, user_id, amount, description, date, notes, month_key')
           .inFilter('type', ['user_paid_for_pool', 'pool_expense'])
+          .eq('month_key', monthKey)
           .filter('trip_id', 'is', 'null')
           .order('date', ascending: false)
           .range(offset, offset + pageSize - 1);

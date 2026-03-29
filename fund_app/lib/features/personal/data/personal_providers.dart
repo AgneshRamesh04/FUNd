@@ -45,17 +45,21 @@ class PersonalTransactionsState {
 
 class PersonalTransactionsNotifier
     extends StateNotifier<PersonalTransactionsState> {
-  PersonalTransactionsNotifier(this._repo)
+  PersonalTransactionsNotifier(this._repo, this._monthKey)
       : super(const PersonalTransactionsState()) {
     _loadFirst();
   }
 
   final PersonalRepository _repo;
+  final String _monthKey;
 
   Future<void> _loadFirst() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final data = await _repo.fetchPersonalTransactions(offset: 0);
+      final data = await _repo.fetchPersonalTransactions(
+        monthKey: _monthKey,
+        offset: 0,
+      );
       state = PersonalTransactionsState(
         transactions: data,
         isLoading: false,
@@ -71,6 +75,7 @@ class PersonalTransactionsNotifier
     state = state.copyWith(isLoadingMore: true, clearError: true);
     try {
       final data = await _repo.fetchPersonalTransactions(
+        monthKey: _monthKey,
         offset: state.transactions.length,
       );
       state = state.copyWith(
@@ -84,9 +89,13 @@ class PersonalTransactionsNotifier
   }
 }
 
-final personalTransactionsProvider = StateNotifierProvider<
-    PersonalTransactionsNotifier, PersonalTransactionsState>((ref) {
-  return PersonalTransactionsNotifier(ref.watch(personalRepositoryProvider));
+/// Family provider keyed by month (YYYY-MM format) for caching per month
+final personalTransactionsProvider = StateNotifierProvider.family<
+    PersonalTransactionsNotifier, PersonalTransactionsState, String>((ref, monthKey) {
+  return PersonalTransactionsNotifier(
+    ref.watch(personalRepositoryProvider),
+    monthKey,
+  );
 });
 
 final personalUserNamesProvider =

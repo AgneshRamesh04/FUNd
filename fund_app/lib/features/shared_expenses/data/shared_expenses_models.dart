@@ -11,7 +11,8 @@ class SharedTransaction with _$SharedTransaction {
 
   const factory SharedTransaction({
     required String id,
-    @JsonKey(name: 'user_id') required String userId,
+    // user_id can be null for pool_expense type transactions which are not tied to any user.
+    @JsonKey(name: 'user_id') String? userId,
     required String type, // 'user_paid_for_pool' | 'pool_expense'
     required double amount,
     String? description,

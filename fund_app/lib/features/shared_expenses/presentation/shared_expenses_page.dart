@@ -20,7 +20,9 @@ class SharedExpensesPage extends ConsumerWidget {
     final poolSummaryAsync = ref.watch(poolSummaryTotalProvider(selectedMonth));
     final tripAsync = ref.watch(activeTripProvider);
     final allTripsAsync = ref.watch(allTripsProvider);
-    final txState = ref.watch(sharedTransactionsProvider);
+    // Generate month key in YYYY-MM format
+    final monthKey = '${selectedMonth.year}-${selectedMonth.month.toString().padLeft(2, '0')}';
+    final txState = ref.watch(sharedTransactionsProvider(monthKey));
     final userNames = ref.watch(sharedUserNamesProvider).value ?? {};
     final currentUserAsync = ref.watch(currentUserProvider);
     final currentUserId = currentUserAsync.maybeWhen(
@@ -139,14 +141,7 @@ class SharedExpensesPage extends ConsumerWidget {
             if (txState.error != null) return _ErrorText(txState.error!);
             if (txState.transactions.isEmpty) return _EmptyState();
 
-            // Filter to only show transactions from the selected month
-            final selectedMonthKey = '${selectedMonth.year}-${selectedMonth.month.toString().padLeft(2, '0')}';
-            final filteredTransactions = txState.transactions
-                .where((tx) => tx.resolvedMonthKey.startsWith(selectedMonthKey))
-                .toList();
-            
-            if (filteredTransactions.isEmpty) return _EmptyState();
-
+            // Transactions are already filtered by the provider (backend query)
             return Container(
               decoration: BoxDecoration(
                 color: theme.cardTheme.color,
@@ -157,15 +152,15 @@ class SharedExpensesPage extends ConsumerWidget {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
-                children: List.generate(filteredTransactions.length, (i) {
+                children: List.generate(txState.transactions.length, (i) {
                   return SharedTransactionTile(
-                    tx: filteredTransactions[i],
+                    tx: txState.transactions[i],
                     userName: getDisplayName(
-                      filteredTransactions[i].userId,
+                      txState.transactions[i].userId ?? '',
                       currentUserId,
                       userNames,
                     ),
-                    showDivider: i < filteredTransactions.length - 1,
+                    showDivider: i < txState.transactions.length - 1,
                   );
                 }),
               ),

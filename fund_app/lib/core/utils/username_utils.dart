@@ -9,5 +9,8 @@ String getDisplayName(
   if (userId == currentUserId) {
     return 'You';
   }
+  else if(userId == ''){
+    return 'FUNd';
+  }
   return userNames[userId] ?? 'Unknown';
 }

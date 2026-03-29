@@ -4,25 +4,22 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../data/shared_expenses_models.dart';
 
-({String label, IconData icon, Color color, String sign}) _meta(String type) =>
+({String label, IconData icon, Color color}) _meta(String type) =>
     switch (type) {
       'user_paid_for_pool' => (
-        label: 'Contribution',
+        label: 'Lend',
         icon: Icons.account_balance_wallet_rounded,
         color: AppTheme.positive,
-        sign: '+',
       ),
       'pool_expense' => (
-        label: 'Pool Expense',
+        label: 'FUNd Expense',
         icon: Icons.receipt_long_rounded,
         color: AppTheme.negative,
-        sign: '-',
       ),
       _ => (
         label: type,
         icon: Icons.payment_rounded,
         color: Colors.grey,
-        sign: '',
       ),
     };
 
@@ -43,7 +40,7 @@ class SharedTransactionTile extends StatelessWidget {
     final theme = Theme.of(context);
     final m = _meta(tx.type);
     final amountStr =
-        '${m.sign}SGD ${NumberFormat('#,##0.00').format(tx.amount)}';
+        'SGD ${NumberFormat('#,##0.00').format(tx.amount)}';
 
     return Column(
       children: [

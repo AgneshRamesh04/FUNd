@@ -81,17 +81,21 @@ class SharedTransactionsState {
 
 class SharedTransactionsNotifier
     extends StateNotifier<SharedTransactionsState> {
-  SharedTransactionsNotifier(this._repo)
+  SharedTransactionsNotifier(this._repo, this._monthKey)
       : super(const SharedTransactionsState()) {
     _loadFirst();
   }
 
   final SharedExpensesRepository _repo;
+  final String _monthKey;
 
   Future<void> _loadFirst() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final data = await _repo.fetchSharedTransactions(offset: 0);
+      final data = await _repo.fetchSharedTransactions(
+        monthKey: _monthKey,
+        offset: 0,
+      );
       state = SharedTransactionsState(
         transactions: data,
         isLoading: false,
@@ -108,6 +112,7 @@ class SharedTransactionsNotifier
     state = state.copyWith(isLoadingMore: true, clearError: true);
     try {
       final data = await _repo.fetchSharedTransactions(
+        monthKey: _monthKey,
         offset: state.transactions.length,
       );
       state = state.copyWith(
@@ -129,10 +134,13 @@ class SharedTransactionsNotifier
   }
 }
 
-final sharedTransactionsProvider = StateNotifierProvider<
-    SharedTransactionsNotifier, SharedTransactionsState>((ref) {
+/// Family provider keyed by month (YYYY-MM format) for caching per month
+final sharedTransactionsProvider = StateNotifierProvider.family<
+    SharedTransactionsNotifier, SharedTransactionsState, String>((ref, monthKey) {
   return SharedTransactionsNotifier(
-      ref.watch(sharedExpensesRepositoryProvider));
+    ref.watch(sharedExpensesRepositoryProvider),
+    monthKey,
+  );
 });
 
 // ── User names ────────────────────────────────────────────────────────────────

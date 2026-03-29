@@ -26,11 +26,8 @@ void main() async {
         const String.fromEnvironment('SUPABASE_URL');
     supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? 
         const String.fromEnvironment('SUPABASE_ANON_KEY');
-
-    debugPrint("--- ${supabaseUrl} \n--- ${supabaseAnonKey}");
   } catch (e) {
     // If dotenv is not initialized, try const from environment
-    debugPrint("\n\n--- i am not where i wanna be\n\n");
     supabaseUrl = const String.fromEnvironment('SUPABASE_URL');
     supabaseAnonKey = const String.fromEnvironment('SUPABASE_ANON_KEY');
   }

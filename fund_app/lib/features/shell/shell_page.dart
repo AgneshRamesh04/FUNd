@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -55,7 +57,8 @@ class _ShellPageState extends ConsumerState<ShellPage>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     // Use the cached reference — ref is no longer safe to call here.
-    _realtime.unsubscribe();
+    // Fire-and-forget: unsubscribe must complete before widget destruction
+    unawaited(_realtime.unsubscribe());
     super.dispose();
   }
 
@@ -77,7 +80,7 @@ class _ShellPageState extends ConsumerState<ShellPage>
       _realtime.unsubscribe().then((_) => _realtime.subscribe());
     } else if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
-      _realtime.unsubscribe();
+      unawaited(_realtime.unsubscribe());
     }
   }
 

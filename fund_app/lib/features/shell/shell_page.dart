@@ -29,6 +29,7 @@ class _ShellPageState extends ConsumerState<ShellPage>
   late PageController _pageController;
   late RealtimeService _realtime;
   late DateTime _selectedMonth;
+  bool _fabMenuExpanded = false;
   // Only build a tab's page once it has actually been visited.
   // Home (index 0) is pre-initialized so it loads immediately.
   final Set<int> _initializedTabs = {0};
@@ -65,6 +66,99 @@ class _ShellPageState extends ConsumerState<ShellPage>
     setState(() {
       _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
     });
+  }
+
+  void _navigateToForm(String type) {
+    _closeFabMenu();
+    // Navigate to transaction form with type parameter
+    // We'll create this form page next
+    Navigator.of(context).pushNamed(
+      '/transaction-form',
+      arguments: TransactionFormArgs(
+        type: type,
+        initialMonth: DateTime.now(), //today, but user can change it in the form
+      ),
+    );
+  }
+
+  void _toggleFabMenu() {
+    setState(() => _fabMenuExpanded = !_fabMenuExpanded);
+  }
+
+  void _closeFabMenu() {
+    setState(() => _fabMenuExpanded = false);
+  }
+
+  List<({String label, String type, IconData icon})> _getFabMenuItems() {
+    return switch (_currentIndex) {
+      0 => [ // Home tab
+        (label: 'Deposit', type: 'deposit', icon: Icons.savings_outlined),
+        (label: 'Shared Expense', type: 'shared_expense', icon: Icons.group_outlined),
+        (label: 'Personal Expense', type: 'personal_expense', icon: Icons.receipt_rounded),
+      ],
+      1 => [ // Personal tab
+        (label: 'Personal Expense', type: 'personal_expense', icon: Icons.receipt_rounded),
+        (label: 'Deposit', type: 'deposit', icon: Icons.savings_outlined),
+      ],
+      2 => [ // Shared tab
+        (label: 'Shared Expense', type: 'shared_expense', icon: Icons.group_outlined),
+        (label: 'Add Trip', type: 'add_trip', icon: Icons.luggage_outlined),
+      ],
+      _ => [],
+    };
+  }
+
+  Widget _buildFabMenu(ThemeData theme) {
+    final items = _getFabMenuItems();
+    return Stack(
+      alignment: Alignment.bottomRight,
+      children: [
+        // Scrim (tap to close)
+        if (_fabMenuExpanded)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _closeFabMenu,
+              child: Container(color: Colors.black.withValues(alpha: 0.3)),
+            ),
+          ),
+        // Menu items (animated)
+        if (_fabMenuExpanded)
+          Positioned(
+            bottom: 70,
+            right: 16,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: List.generate(items.length, (i) {
+                final delay = Duration(milliseconds: i * 50);
+                return _AnimatedFabMenuItem(
+                  delay: delay,
+                  label: items[i].label,
+                  icon: items[i].icon,
+                  onTap: () => _navigateToForm(items[i].type),
+                );
+              }),
+            ),
+          ),
+        // Main FAB button
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: FloatingActionButton(
+            onPressed: _toggleFabMenu,
+            backgroundColor: AppTheme.accent,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: AnimatedRotation(
+              turns: _fabMenuExpanded ? 0.125 : 0, // 45 degrees
+              duration: const Duration(milliseconds: 200),
+              child: const Icon(Icons.add_rounded),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -202,14 +296,7 @@ class _ShellPageState extends ConsumerState<ShellPage>
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: AppTheme.accent,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.add_rounded),
-      ),
+      floatingActionButton: _buildFabMenu(theme),
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
@@ -265,4 +352,123 @@ class _ShellPageState extends ConsumerState<ShellPage>
       ),
     );
   }
+}
+
+// ── FAB Menu Item Widget ───────────────────────────────────────────────────
+
+class _AnimatedFabMenuItem extends StatefulWidget {
+  const _AnimatedFabMenuItem({
+    required this.delay,
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final Duration delay;
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  State<_AnimatedFabMenuItem> createState() => _AnimatedFabMenuItemState();
+}
+
+class _AnimatedFabMenuItemState extends State<_AnimatedFabMenuItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _scaleAnimation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(
+          CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+        );
+
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0.3, 0), end: Offset.zero).animate(
+          CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+        );
+
+    Future.delayed(widget.delay, () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SlideTransition(
+      position: _slideAnimation,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: GestureDetector(
+            onTap: widget.onTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: theme.cardTheme.color,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: theme.dividerTheme.color ?? Colors.transparent,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    widget.icon,
+                    size: 18,
+                    color: AppTheme.accent,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    widget.label,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.textTheme.bodyMedium?.color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Transaction Form Arguments ─────────────────────────────────────────────
+
+class TransactionFormArgs {
+  final String type;
+  final DateTime initialMonth;
+
+  TransactionFormArgs({
+    required this.type,
+    required this.initialMonth,
+  });
 }

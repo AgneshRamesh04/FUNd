@@ -93,8 +93,7 @@ class _ShellPageState extends ConsumerState<ShellPage>
         centerTitle: false,
         automaticallyImplyLeading: false,
         titleSpacing: 0,
-        title: (_currentIndex == 0 || _currentIndex == 2)
-            ? GestureDetector(
+        title: GestureDetector(
                 onTap: _pickMonth,
                 child: Padding(
                   padding: const EdgeInsets.only(left: 20.0),
@@ -113,13 +112,6 @@ class _ShellPageState extends ConsumerState<ShellPage>
                       ),
                     ],
                   ),
-                ),
-              )
-            : Padding(
-                padding: const EdgeInsets.only(left: 20.0),
-                child: Text(
-                  'Personal',
-                  style: theme.textTheme.titleLarge,
                 ),
               ),
         actions: [
@@ -170,7 +162,7 @@ class _ShellPageState extends ConsumerState<ShellPage>
         children: [
           HomePage(selectedMonth: _selectedMonth),
           _initializedTabs.contains(1)
-              ? const PersonalPage()
+              ? PersonalPage(selectedMonth: _selectedMonth)
               : const SizedBox.shrink(),
           _initializedTabs.contains(2)
               ? SharedExpensesPage(selectedMonth: _selectedMonth)

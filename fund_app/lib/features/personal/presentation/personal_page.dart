@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/username_utils.dart';
 
 import '../../home/data/home_providers.dart';
@@ -11,7 +12,9 @@ import '../data/personal_providers.dart';
 import 'widgets/transaction_tile.dart';
 
 class PersonalPage extends ConsumerWidget {
-  const PersonalPage({super.key});
+  const PersonalPage({super.key, required this.selectedMonth});
+
+  final DateTime selectedMonth;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -130,116 +133,43 @@ class PersonalPage extends ConsumerWidget {
               }
               if (txState.transactions.isEmpty) return _EmptyState();
 
-              // Group by month key, preserving newest-first order
-              final Map<String, List> grouped = {};
-              for (final tx in txState.transactions) {
-                (grouped[tx.resolvedMonthKey] ??= []).add(tx);
-              }
-              final keys = grouped.keys.toList();
+              // Filter to only show transactions from the selected month
+              final selectedMonthKey = '${selectedMonth.year}-${selectedMonth.month.toString().padLeft(2, '0')}';
+              final filteredTransactions = txState.transactions
+                  .where((tx) => tx.resolvedMonthKey.startsWith(selectedMonthKey))
+                  .toList();
+              
+              if (filteredTransactions.isEmpty) return _EmptyState();
 
-              return Column(
-                children: [
-                  ...keys.map((monthKey) {
-                    final group = grouped[monthKey]!;
-                    final label = _monthLabel(monthKey);
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Month group header
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.accent.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  label,
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: AppTheme.accent,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Transaction card for the group
-                        Container(
-                          decoration: BoxDecoration(
-                            color: theme.cardTheme.color,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: theme.dividerTheme.color ??
-                                  Colors.transparent,
-                            ),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Column(
-                            children: List.generate(group.length, (i) {
-                              return TransactionTile(
-                                tx: group[i],
-                                userName: getDisplayName(
-                                  group[i].userId,
-                                  currentUserId,
-                                  userNames,
-                                ),
-                                showDivider: i < group.length - 1,
-                              );
-                            }),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+              // All transactions should be from the same month, so display them in a single card
+              return Container(
+                decoration: BoxDecoration(
+                  color: theme.cardTheme.color,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: theme.dividerTheme.color ?? Colors.transparent,
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: List.generate(filteredTransactions.length, (i) {
+                    return TransactionTile(
+                      tx: filteredTransactions[i],
+                      userName: getDisplayName(
+                        filteredTransactions[i].userId,
+                        currentUserId,
+                        userNames,
+                      ),
+                      showDivider: i < filteredTransactions.length - 1,
                     );
                   }),
-                  // ── Load more footer ───────────────────────────────────
-                  if (txState.isLoadingMore)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
-                      child:
-                          Center(child: CircularProgressIndicator.adaptive()),
-                    )
-                  else if (txState.hasMore)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4, bottom: 8),
-                      child: Center(
-                        child: TextButton(
-                          onPressed: () => ref
-                              .read(personalTransactionsProvider.notifier)
-                              .loadMore(),
-                          child: Text(
-                            'Load more',
-                            style: TextStyle(
-                              color: AppTheme.accent,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+                ),
               );
             },
           ),
         ],
       ),
     );
-  }
-
-  /// Parses "2026-03" → "March 2026"
-  String _monthLabel(String key) {
-    try {
-      final parts = key.split('-');
-      final dt = DateTime(int.parse(parts[0]), int.parse(parts[1]));
-      return DateFormat.yMMMM().format(dt);
-    } catch (_) {
-      return key;
-    }
   }
 }
 

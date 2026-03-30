@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/utils/date_utils.dart';
 import 'personal_models.dart';
 
 class PersonalRepository {
@@ -35,5 +36,29 @@ class PersonalRepository {
       for (final u in data as List)
         u['id'] as String: (u['name'] as String?) ?? 'Unknown'
     };
+  }
+
+  /// Creates a personal transaction (borrow).
+  Future<void> createPersonalTransaction({
+    required String userId,
+    required double amount,
+    required String description,
+    required DateTime date,
+    required String monthKey,
+    String? notes,
+  }) async {
+    try {
+      await supabase.from('transactions').insert({
+        'type': 'borrow',
+        'user_id': userId,
+        'amount': amount,
+        'description': description,
+        'date': DateUtils.toDateString(date),
+        'month_key': monthKey,
+        'notes': notes,
+      });
+    } catch (e) {
+      rethrow;
+    }
   }
 }

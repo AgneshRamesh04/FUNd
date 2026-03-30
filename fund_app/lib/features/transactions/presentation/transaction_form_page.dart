@@ -4,8 +4,11 @@ import 'package:intl/intl.dart';
 
 import '../../../core/models/app_user.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/date_utils.dart' as app_date_utils;
 import '../../../shared/providers/current_user_provider.dart';
 import '../../../shared/providers/all_pool_members_provider.dart';
+import '../../personal/data/personal_providers.dart';
+import '../../shared_expenses/data/shared_expenses_providers.dart';
 import '../../shell/shell_page.dart';
 
 class TransactionFormPage extends ConsumerStatefulWidget {
@@ -143,34 +146,84 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       return;
     }
 
-    final transaction = {
-      'type': _transactionType,
-      'amount': _amount,
-      'description': _descriptionController.text,
-      'date': DateFormat('yyyy-MM-dd').format(_selectedDate),
-      'by': _isFundPool ? 'FUNd Pool' : 'User: $_selectedUserId',
-    };
+    _submitToDatabase(addAnother);
+  }
 
-    // Print parameters
-    debugPrint('Transaction Created:');
-    debugPrint(transaction.toString());
+  Future<void> _submitToDatabase(bool addAnother) async {
+    try {
+      final monthKey = app_date_utils.DateUtils.toMonthKey(_selectedDate);
+      final userId = _isFundPool ? null : _selectedUserId;
+      final notes = _notesController.text.isEmpty ? null : _notesController.text;
 
-    setState(() {
-      _createdTransactions.add(transaction);
-    });
+      if (_transactionType == 'personal_expense') {
+        // personal_expense → 'borrow' in DB
+        await ref.read(personalRepositoryProvider).createPersonalTransaction(
+          userId: userId!,
+          amount: _amount,
+          description: _descriptionController.text,
+          date: _selectedDate,
+          monthKey: monthKey,
+          notes: notes,
+        );
+      } 
+      else if (_transactionType == 'shared_expense') {
+        // shared_expense → 'pool_expense' (if FUNd/null) OR 'user_paid_for_pool' (if user)
+        await ref.read(sharedExpensesRepositoryProvider).createTransaction(
+          type: 'shared',
+          userId: userId,
+          amount: _amount,
+          description: _descriptionController.text,
+          date: _selectedDate,
+          monthKey: monthKey,
+          notes: notes,
+        );
+      }
+      else if (_transactionType == 'deposit') {
+        // deposit → 'deposit' in DB (always with user_id from dropdown)
+        await ref.read(sharedExpensesRepositoryProvider).createTransaction(
+          type: 'deposit',
+          userId: userId,
+          amount: _amount,
+          description: _descriptionController.text,
+          date: _selectedDate,
+          monthKey: monthKey,
+          notes: notes,
+        );
+      }
 
-    if (addAnother) {
-      // Clear amount and description, keep other fields
-      _amountController.clear();
-      _descriptionController.clear();
+      final transaction = {
+        'type': _transactionType,
+        'amount': _amount,
+        'description': _descriptionController.text,
+        'date': DateFormat('yyyy-MM-dd').format(_selectedDate),
+        'by': _isFundPool ? 'FUNd Pool' : 'User: $_selectedUserId',
+      };
+
+      debugPrint('Transaction Created:');
+      debugPrint(transaction.toString());
+
+      setState(() {
+        _createdTransactions.add(transaction);
+      });
+
+      if (addAnother) {
+        _amountController.clear();
+        _descriptionController.clear();
+        _notesController.clear();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Added! Ready for next entry')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Transaction saved')),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      debugPrint('Error saving transaction: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Added! Ready for next entry')),
+        SnackBar(content: Text('Error: ${e.toString()}')),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Transaction submitted')),
-      );
-      Navigator.of(context).pop();
     }
   }
 
@@ -189,34 +242,50 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       return;
     }
 
-    final trip = {
-      'type': 'add_trip',
-      'name': _tripNameController.text,
-      'start_date': DateFormat('yyyy-MM-dd').format(_selectedDate),
-      'end_date': DateFormat('yyyy-MM-dd').format(_endDate!),
-    };
+    _submitTripToDatabase(addAnother);
+  }
 
-    // Print parameters
-    debugPrint('Trip Created:');
-    debugPrint(trip.toString());
+  Future<void> _submitTripToDatabase(bool addAnother) async {
+    try {
+      await ref.read(sharedExpensesRepositoryProvider).createTrip(
+        tripName: _tripNameController.text,
+        startDate: _selectedDate,
+        endDate: _endDate!,
+      );
 
-    setState(() {
-      _createdTrips.add(trip);
-    });
+      final trip = {
+        'type': 'add_trip',
+        'name': _tripNameController.text,
+        'start_date': DateFormat('yyyy-MM-dd').format(_selectedDate),
+        'end_date': DateFormat('yyyy-MM-dd').format(_endDate!),
+      };
 
-    if (addAnother) {
-      _tripNameController.clear();
+      debugPrint('Trip Created:');
+      debugPrint(trip.toString());
+
       setState(() {
-        _endDate = null;
+        _createdTrips.add(trip);
       });
+
+      if (addAnother) {
+        _tripNameController.clear();
+        setState(() {
+          _endDate = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Added! Ready for next trip')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Trip created')),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      debugPrint('Error saving trip: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Added! Ready for next trip')),
+        SnackBar(content: Text('Error: ${e.toString()}')),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Trip created')),
-      );
-      Navigator.of(context).pop();
     }
   }
 
@@ -1031,7 +1100,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
   String _getByLabel() {
     return switch (_transactionType) {
       'deposit' => 'Deposited By',
-      'personal_expense' => 'Paid By',
+      'personal_expense' => 'Borrowed By',
       'shared_expense' => 'Paid By',
       _ => 'By',
     };

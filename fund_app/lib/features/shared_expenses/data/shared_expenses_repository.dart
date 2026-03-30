@@ -150,4 +150,86 @@ class SharedExpensesRepository {
       throw AppException.fromError(e, st);
     }
   }
+
+  /// Creates a shared expense or deposit transaction.
+  /// Type can be explicitly specified or auto-determined based on userId:
+  /// - If type='deposit': always 'deposit'
+  /// - If type='shared': userId null → 'pool_expense', userId provided → 'user_paid_for_pool'
+  Future<void> createTransaction({
+    required String type,
+    required String? userId,
+    required double amount,
+    required String description,
+    required DateTime date,
+    required String monthKey,
+    String? notes,
+  }) async {
+    try {
+      late final String transactionType;
+      
+      if (type == 'deposit') {
+        transactionType = 'deposit';
+      } else if (type == 'shared') {
+        transactionType = userId == null ? 'pool_expense' : 'user_paid_for_pool';
+      } else {
+        throw ArgumentError('Invalid type: $type');
+      }
+      
+      await supabase.from('transactions').insert({
+        'type': transactionType,
+        'user_id': userId,
+        'amount': amount,
+        'description': description,
+        'date': DateUtils.toDateString(date),
+        'month_key': monthKey,
+        'notes': notes,
+      });
+    } catch (e, st) {
+      throw AppException.fromError(e, st);
+    }
+  }
+
+  /// Creates a shared expense transaction.
+  /// If userId is null, it's a pool_expense; otherwise, it's user_paid_for_pool.
+  Future<void> createSharedExpense({
+    required String? userId,
+    required double amount,
+    required String description,
+    required DateTime date,
+    required String monthKey,
+    String? notes,
+  }) async {
+    try {
+      final transactionType = userId == null ? 'pool_expense' : 'user_paid_for_pool';
+      
+      await supabase.from('transactions').insert({
+        'type': transactionType,
+        'user_id': userId,
+        'amount': amount,
+        'description': description,
+        'date': DateUtils.toDateString(date),
+        'month_key': monthKey,
+        'notes': notes,
+      });
+    } catch (e, st) {
+      throw AppException.fromError(e, st);
+    }
+  }
+
+  /// Creates a new trip.
+  Future<void> createTrip({
+    required String tripName,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    try {
+      await supabase.from('trips').insert({
+        'trip_name': tripName,
+        'start_date': DateUtils.toDateString(startDate),
+        'end_date': DateUtils.toDateString(endDate),
+      });
+    } catch (e, st) {
+      throw AppException.fromError(e, st);
+    }
+  }
 }

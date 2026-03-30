@@ -43,14 +43,11 @@ class SharedExpensesRepository {
   Future<double> fetchPoolSummaryTotal(DateTime month) async {
     try {
       final monthStr = DateUtils.toMonthKey(month);
-      print("fetching pool summary total for month: $monthStr");
       final data = await supabase
           .from('pool_summary')
           .select('shared_expense')
           .eq('month', monthStr)
           .limit(1);
-
-      print("pool summary total response: $data");
 
       if ((data as List).isEmpty) return 0.0;
       return (data.first['shared_expense'] as num?)?.toDouble() ?? 0.0;

@@ -51,6 +51,8 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
     _tripName = '';
     _selectedUserId = '';
     _isFundPool = false;
+    _createdTransactions = [];
+    _createdTrips = [];
     
     _descriptionFocusNode = FocusNode();
     
@@ -146,21 +148,46 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       return;
     }
 
+    // Validate description
+    if (_descriptionController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a description')),
+      );
+      return;
+    }
+
+    // Validate user selection for user-specific transactions
+    if (!_isFundPool && _selectedUserId.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a user')),
+      );
+      return;
+    }
+
+    // Validate: Deposit must always have a user (not FUNd)
+    if (_transactionType == 'deposit' && _isFundPool) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Deposit must be by a specific user, not FUNd')),
+      );
+      return;
+    }
+
     _submitToDatabase(addAnother);
   }
 
   Future<void> _submitToDatabase(bool addAnother) async {
     try {
       final monthKey = app_date_utils.DateUtils.toMonthKey(_selectedDate);
-      final userId = _isFundPool ? null : _selectedUserId;
-      final notes = _notesController.text.isEmpty ? null : _notesController.text;
+      final userId = _isFundPool ? null : _selectedUserId.trim();
+      final notes = _notesController.text.trim().isEmpty ? null : _notesController.text.trim();
+      final description = _descriptionController.text.trim();
 
       if (_transactionType == 'personal_expense') {
         // personal_expense → 'borrow' in DB
         await ref.read(personalRepositoryProvider).createPersonalTransaction(
           userId: userId!,
           amount: _amount,
-          description: _descriptionController.text,
+          description: description,
           date: _selectedDate,
           monthKey: monthKey,
           notes: notes,
@@ -172,7 +199,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
           type: 'shared',
           userId: userId,
           amount: _amount,
-          description: _descriptionController.text,
+          description: description,
           date: _selectedDate,
           monthKey: monthKey,
           notes: notes,
@@ -184,7 +211,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
           type: 'deposit',
           userId: userId,
           amount: _amount,
-          description: _descriptionController.text,
+          description: description,
           date: _selectedDate,
           monthKey: monthKey,
           notes: notes,
@@ -194,13 +221,10 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       final transaction = {
         'type': _transactionType,
         'amount': _amount,
-        'description': _descriptionController.text,
+        'description': description,
         'date': DateFormat('yyyy-MM-dd').format(_selectedDate),
-        'by': _isFundPool ? 'FUNd Pool' : 'User: $_selectedUserId',
+        'by': _isFundPool ? 'FUNd Pool' : 'User: $userId',
       };
-
-      debugPrint('Transaction Created:');
-      debugPrint(transaction.toString());
 
       setState(() {
         _createdTransactions.add(transaction);
@@ -220,15 +244,22 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
         Navigator.of(context).pop();
       }
     } catch (e) {
-      debugPrint('Error saving transaction: $e');
+      String errorMessage = 'An error occurred while saving the transaction';
+      if (e.toString().contains('PgSQLException')) {
+        errorMessage = 'Database error. Please try again.';
+      } else if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network error. Check your connection.';
+      } else if (e.toString().contains('TimeoutException')) {
+        errorMessage = 'Request timed out. Please try again.';
+      }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(content: Text(errorMessage)),
       );
     }
   }
 
   void _submitTrip(bool addAnother) {
-    if (_tripNameController.text.isEmpty) {
+    if (_tripNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a trip name')),
       );
@@ -242,26 +273,31 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       return;
     }
 
+    // Validate: end date must be after start date
+    if (_endDate!.isBefore(_selectedDate) || _endDate!.isAtSameMomentAs(_selectedDate)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('End date must be after start date')),
+      );
+      return;
+    }
+
     _submitTripToDatabase(addAnother);
   }
 
   Future<void> _submitTripToDatabase(bool addAnother) async {
     try {
       await ref.read(sharedExpensesRepositoryProvider).createTrip(
-        tripName: _tripNameController.text,
+        tripName: _tripNameController.text.trim(),
         startDate: _selectedDate,
         endDate: _endDate!,
       );
 
       final trip = {
         'type': 'add_trip',
-        'name': _tripNameController.text,
+        'name': _tripNameController.text.trim(),
         'start_date': DateFormat('yyyy-MM-dd').format(_selectedDate),
         'end_date': DateFormat('yyyy-MM-dd').format(_endDate!),
       };
-
-      debugPrint('Trip Created:');
-      debugPrint(trip.toString());
 
       setState(() {
         _createdTrips.add(trip);
@@ -282,9 +318,16 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
         Navigator.of(context).pop();
       }
     } catch (e) {
-      debugPrint('Error saving trip: $e');
+      String errorMessage = 'An error occurred while creating the trip';
+      if (e.toString().contains('PgSQLException')) {
+        errorMessage = 'Database error. Please try again.';
+      } else if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network error. Check your connection.';
+      } else if (e.toString().contains('TimeoutException')) {
+        errorMessage = 'Request timed out. Please try again.';
+      }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(content: Text(errorMessage)),
       );
     }
   }
@@ -953,13 +996,19 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
           options.add({'id': 'fund', 'name': 'FUNd', 'type': 'fund'});
         }
 
-        // Set default to current user if not set
         return currentUserAsync.maybeWhen(
           data: (currentUser) {
+            // Initialize to current user on first render (deferred via callback)
             if (_selectedUserId.isEmpty && !_isFundPool) {
-              _selectedUserId = currentUser.id;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted && _selectedUserId.isEmpty) {
+                  setState(() {
+                    _selectedUserId = currentUser.id;
+                  });
+                }
+              });
             }
-            
+
             return PopupMenuButton<String>(
               position: PopupMenuPosition.under,
               onSelected: (value) {

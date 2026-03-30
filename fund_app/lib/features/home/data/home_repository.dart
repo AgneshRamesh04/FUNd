@@ -47,7 +47,6 @@ class HomeRepository {
   Future<Map<String, double>> fetchMonthlyInflowOutflow(DateTime month) async {
     try {
       final monthStr = DateUtils.toMonthKey(month);
-      print("fetching monthly inflow/outflow for month: $monthStr");
       final data = await supabase
           .from('pool_summary')
           .select('monthly_inflow, monthly_outflow')

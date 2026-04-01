@@ -28,20 +28,51 @@ class RealtimeService {
             event: PostgresChangeEvent.all,
             schema: 'public',
             table: 'transactions',
-            callback: (_) {
-              _ref.invalidate(poolBalanceProvider);
-              _ref.invalidate(userDebtsProvider);
-              _ref.invalidate(inflowOutflowProvider);
-              _ref.invalidate(personalTransactionsProvider);
-              _ref.invalidate(poolMonthExpenseProvider);
-              _ref.invalidate(sharedTransactionsProvider);
-              _ref.invalidate(activeTripProvider);
-              _ref.invalidate(allTripsProvider);
-              _ref.invalidate(poolSummaryTotalProvider);
+            callback: (payload) {
+              _invalidateGlobalTransactionProviders();
+
+              final record = payload.newRecord.isNotEmpty
+                  ? payload.newRecord
+                  : payload.oldRecord;
+              final type = record['type'] as String?;
+              final monthKey = record['month_key'] as String?;
+              final monthDate = _monthKeyAsDateTime(monthKey);
+              final monthFamilyKey = monthKey != null && monthKey.length >= 7
+                  ? monthKey.substring(0, 7)
+                  : null;
+
+              // Pool/personal grid refresh by month.
+              if (monthDate != null) {
+                _ref.invalidate(inflowOutflowProvider(monthDate));
+                _ref.invalidate(poolMonthExpenseProvider(monthDate));
+                _ref.invalidate(poolSummaryTotalProvider(monthDate));
+              }
+
+              if (monthFamilyKey != null) {
+                _ref.invalidate(sharedTransactionsProvider(monthFamilyKey));
+                _ref.invalidate(personalTransactionsProvider(monthFamilyKey));
+              }
+
+              // Trip list may be affected by transaction trip assignment.
+              if (record.containsKey('trip_id')) {
+                _ref.invalidate(activeTripProvider);
+                _ref.invalidate(allTripsProvider);
+              }
+
+              // Type-specific after-month invalidations
+              if (type == 'borrow' && monthFamilyKey != null) {
+                _ref.invalidate(personalTransactionsProvider(monthFamilyKey));
+              } else if (monthFamilyKey != null &&
+                  (type == 'user_paid_for_pool' ||
+                      type == 'pool_expense' ||
+                      type == 'deposit')) {
+                _ref.invalidate(sharedTransactionsProvider(monthFamilyKey));
+              }
             },
           )
           .subscribe(),
     );
+
 
     // ── trips → trip_summary (provider not yet implemented) ──────────────────
     _channels.add(
@@ -73,6 +104,20 @@ class RealtimeService {
           )
           .subscribe(),
     );
+  }
+
+  DateTime? _monthKeyAsDateTime(String? monthKey) {
+    if (monthKey == null || monthKey.isEmpty) return null;
+
+    final normalized = monthKey.length == 7 ? '$monthKey-01' : monthKey;
+    return DateTime.tryParse(normalized);
+  }
+
+  void _invalidateGlobalTransactionProviders() {
+    _ref.invalidate(poolBalanceProvider);
+    _ref.invalidate(userDebtsProvider);
+    _ref.invalidate(activeTripProvider);
+    _ref.invalidate(allTripsProvider);
   }
 
   /// Removes all open channels and clears the list.

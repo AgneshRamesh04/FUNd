@@ -8,8 +8,7 @@ import '../../../core/utils/app_exception.dart';
 import '../../../core/utils/date_utils.dart' as app_date_utils;
 import '../../../shared/providers/current_user_provider.dart';
 import '../../../shared/providers/all_pool_members_provider.dart';
-import '../../personal/data/personal_providers.dart';
-import '../../shared_expenses/data/shared_expenses_providers.dart';
+import '../data/transaction_service.dart';
 import '../../shell/shell_page.dart';
 
 class TransactionFormPage extends ConsumerStatefulWidget {
@@ -179,8 +178,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       final description = _descriptionController.text.trim();
 
       if (_transactionType == 'personal_expense') {
-        // personal_expense → 'borrow' in DB
-        await ref.read(personalRepositoryProvider).createPersonalTransaction(
+        await ref.read(transactionServiceProvider).createPersonalExpense(
           userId: userId!,
           amount: _amount,
           description: description,
@@ -188,11 +186,9 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
           monthKey: monthKey,
           notes: notes,
         );
-      } 
-      else if (_transactionType == 'shared_expense') {
-        // shared_expense → 'pool_expense' (if FUNd/null) OR 'user_paid_for_pool' (if user)
-        await ref.read(sharedExpensesRepositoryProvider).createTransaction(
-          type: 'shared',
+      } else if (_transactionType == 'shared_expense') {
+        await ref.read(transactionServiceProvider).createSharedExpense(
+          isFundPool: _isFundPool,
           userId: userId,
           amount: _amount,
           description: description,
@@ -200,12 +196,9 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
           monthKey: monthKey,
           notes: notes,
         );
-      }
-      else if (_transactionType == 'deposit') {
-        // deposit → 'deposit' in DB (always with user_id from dropdown)
-        await ref.read(sharedExpensesRepositoryProvider).createTransaction(
-          type: 'deposit',
-          userId: userId,
+      } else if (_transactionType == 'deposit') {
+        await ref.read(transactionServiceProvider).createDeposit(
+          userId: userId!,
           amount: _amount,
           description: description,
           date: _selectedDate,
@@ -289,7 +282,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
     try {
       setState(() => _isSubmitting = true);
       
-      await ref.read(sharedExpensesRepositoryProvider).createTrip(
+      await ref.read(transactionServiceProvider).createTrip(
         tripName: _tripNameController.text.trim(),
         startDate: _selectedDate,
         endDate: _endDate!,

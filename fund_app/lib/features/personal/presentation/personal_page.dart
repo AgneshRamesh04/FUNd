@@ -9,6 +9,8 @@ import '../../../shared/widgets/skeleton_loader.dart';
 
 import '../../home/data/home_providers.dart';
 import '../../../shared/providers/current_user_provider.dart';
+import '../../transactions/data/transaction_service.dart';
+import '../data/personal_models.dart';
 import '../data/personal_providers.dart';
 import 'widgets/transaction_tile.dart';
 
@@ -144,14 +146,17 @@ class PersonalPage extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   children: List.generate(txState.transactions.length, (i) {
+                    final tx = txState.transactions[i];
                     return TransactionTile(
-                      tx: txState.transactions[i],
+                      tx: tx,
                       userName: getDisplayName(
-                        txState.transactions[i].userId,
+                        tx.userId,
                         currentUserId,
                         userNames,
                       ),
                       showDivider: i < txState.transactions.length - 1,
+                      onEdit: () => _showEditPersonalTransactionDialog(context, ref, tx),
+                      onDelete: () => _confirmDeletePersonalTransaction(context, ref, tx),
                     );
                   }),
                 ),
@@ -162,6 +167,122 @@ class PersonalPage extends ConsumerWidget {
       ),
     );
   }
+  Future<void> _confirmDeletePersonalTransaction(
+    BuildContext context,
+    WidgetRef ref,
+    PersonalTransaction tx,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Confirm delete'),
+          content: const Text('Delete this transaction? This cannot be undone.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+            TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await ref.read(transactionServiceProvider).deletePersonalTransaction(tx.id);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Personal transaction deleted')),
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Delete failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _showEditPersonalTransactionDialog(
+    BuildContext context,
+    WidgetRef ref,
+    PersonalTransaction tx,
+  ) async {
+    final amountController = TextEditingController(text: tx.amount.toStringAsFixed(2));
+    final descController = TextEditingController(text: tx.description ?? '');
+    final notesController = TextEditingController(text: tx.notes ?? '');
+
+    final submit = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Personal Transaction'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: amountController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: 'Amount'),
+                ),
+                TextField(
+                  controller: descController,
+                  decoration: const InputDecoration(labelText: 'Description'),
+                ),
+                TextField(
+                  controller: notesController,
+                  decoration: const InputDecoration(labelText: 'Notes'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+            TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Save')),
+          ],
+        );
+      },
+    );
+
+    if (submit != true || !context.mounted) return;
+
+    final amount = double.tryParse(amountController.text.trim());
+    if (amount == null || amount <= 0) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter valid amount')));
+      return;
+    }
+
+    final desc = descController.text.trim();
+    if (desc.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Description cannot be empty')));
+      return;
+    }
+
+    try {
+      await ref.read(transactionServiceProvider).updatePersonalTransaction(
+            id: tx.id,
+            userId: tx.userId,
+            type: tx.type,
+            amount: amount,
+            description: desc,
+            date: tx.date,
+            monthKey: tx.monthKey ?? app_date.DateUtils.toMonthKey(tx.date),
+            notes: notesController.text.trim().isEmpty ? null : notesController.text.trim(),
+          );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Personal transaction updated')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Update failed: ${e.toString()}')),
+      );
+    }
+  }
 }
+
 
 

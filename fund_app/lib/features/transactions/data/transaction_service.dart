@@ -81,6 +81,58 @@ class TransactionService {
       endDate: endDate,
     );
   }
+
+  Future<void> updatePersonalTransaction({
+    required String id,
+    required String userId,
+    required String type,
+    required double amount,
+    required String description,
+    required DateTime date,
+    required String monthKey,
+    String? notes,
+  }) async {
+    await _personalRepository.updatePersonalTransaction(
+      id: id,
+      userId: userId,
+      type: type,
+      amount: amount,
+      description: description,
+      date: date,
+      monthKey: monthKey,
+      notes: notes,
+    );
+  }
+
+  Future<void> deletePersonalTransaction(String id) async {
+    await _personalRepository.deletePersonalTransaction(id);
+  }
+
+  Future<void> updateSharedTransaction({
+    required String id,
+    required String type,
+    required String? userId,
+    required double amount,
+    required String description,
+    required DateTime date,
+    required String monthKey,
+    String? notes,
+  }) async {
+    await _sharedRepository.updateTransaction(
+      id: id,
+      type: type,
+      userId: userId,
+      amount: amount,
+      description: description,
+      date: date,
+      monthKey: monthKey,
+      notes: notes,
+    );
+  }
+
+  Future<void> deleteSharedTransaction(String id) async {
+    await _sharedRepository.deleteTransaction(id);
+  }
 }
 
 final transactionServiceProvider = Provider<TransactionService>((ref) {

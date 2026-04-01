@@ -36,12 +36,16 @@ class TransactionTile extends StatelessWidget {
   final PersonalTransaction tx;
   final String userName;
   final bool showDivider;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const TransactionTile({
     super.key,
     required this.tx,
     required this.userName,
     this.showDivider = true,
+    this.onEdit,
+    this.onDelete,
   });
 
   @override
@@ -116,6 +120,21 @@ class TransactionTile extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                   color: m.color,
                 ),
+              ),
+              const SizedBox(width: 8),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, size: 18),
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                  const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                ],
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    onEdit?.call();
+                  } else if (value == 'delete') {
+                    onDelete?.call();
+                  }
+                },
               ),
             ],
           ),

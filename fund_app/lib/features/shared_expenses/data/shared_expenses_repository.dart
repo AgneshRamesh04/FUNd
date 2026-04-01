@@ -200,6 +200,55 @@ class SharedExpensesRepository {
     }
   }
 
+  Future<void> updateTransaction({
+    required String id,
+    required String type,
+    required String? userId,
+    required double amount,
+    required String description,
+    required DateTime date,
+    required String monthKey,
+    String? notes,
+  }) async {
+    try {
+      if (id.trim().isEmpty) {
+        throw AppException.validation('Transaction ID is required for update');
+      }
+      if (!ValidationUtils.isValidAmount(amount)) {
+        throw AppException.validation('Amount must be greater than 0');
+      }
+      if (!ValidationUtils.isValidDescription(description)) {
+        throw AppException.validation('Description cannot be empty');
+      }
+
+      final sanitizedDescription = ValidationUtils.sanitizeInput(description);
+      final sanitizedNotes = notes != null ? ValidationUtils.sanitizeInput(notes) : null;
+
+      await supabase.from('transactions').update({
+        'type': type,
+        'user_id': userId,
+        'amount': amount,
+        'description': sanitizedDescription,
+        'date': DateUtils.toDateString(date),
+        'month_key': monthKey,
+        'notes': sanitizedNotes,
+      }).eq('id', id);
+    } catch (e, st) {
+      throw AppException.fromError(e, st);
+    }
+  }
+
+  Future<void> deleteTransaction(String id) async {
+    try {
+      if (id.trim().isEmpty) {
+        throw AppException.validation('Transaction ID is required for delete');
+      }
+      await supabase.from('transactions').delete().eq('id', id);
+    } catch (e, st) {
+      throw AppException.fromError(e, st);
+    }
+  }
+
   /// Creates a shared expense transaction.
   /// If userId is null, it's a pool_expense; otherwise, it's user_paid_for_pool.
   /// Sanitizes all user inputs before database insertion.

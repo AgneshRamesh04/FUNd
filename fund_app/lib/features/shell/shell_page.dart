@@ -47,11 +47,12 @@ class _ShellPageState extends ConsumerState<ShellPage>
   }
 
   Future<void> _pickMonth() async {
+    final now = DateTime.now();
     final picked = await showMonthPicker(
       context: context,
       initialDate: _selectedMonth,
       firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+      lastDate: now.add(const Duration(days: 180)), // Limit to 6 months in future
     );
     if (picked != null) setState(() => _selectedMonth = picked);
   }

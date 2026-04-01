@@ -1,6 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/utils/app_exception.dart';
 import '../../../core/utils/date_utils.dart';
+import '../../../core/utils/validation_utils.dart';
 import 'personal_models.dart';
 
 class PersonalRepository {
@@ -24,21 +26,26 @@ class PersonalRepository {
           .order('date', ascending: false)
           .range(offset, offset + pageSize - 1);
       return (data).map(PersonalTransaction.fromJson).toList();
-    } catch (e) {
-      rethrow;
+    } catch (e, st) {
+      throw AppException.fromError(e, st);
     }
   }
 
   /// Returns a userId → name map from the users table.
   Future<Map<String, String>> fetchUserNames() async {
-    final data = await supabase.from('users').select('id, name');
-    return {
-      for (final u in data as List)
-        u['id'] as String: (u['name'] as String?) ?? 'Unknown'
-    };
+    try {
+      final data = await supabase.from('users').select('id, name');
+      return {
+        for (final u in data as List)
+          u['id'] as String: (u['name'] as String?) ?? 'Unknown'
+      };
+    } catch (e, st) {
+      throw AppException.fromError(e, st);
+    }
   }
 
   /// Creates a personal transaction (borrow).
+  /// Sanitizes all user inputs before database insertion
   Future<void> createPersonalTransaction({
     required String userId,
     required double amount,
@@ -48,17 +55,33 @@ class PersonalRepository {
     String? notes,
   }) async {
     try {
+      // Validate inputs
+      if (!ValidationUtils.isValidAmount(amount)) {
+        throw AppException.validation('Amount must be greater than 0');
+      }
+      if (!ValidationUtils.isValidUserId(userId)) {
+        throw AppException.validation('User ID cannot be empty');
+      }
+      if (!ValidationUtils.isValidDescription(description)) {
+        throw AppException.validation('Description cannot be empty');
+      }
+      
+      // Sanitize inputs
+      final sanitizedDescription = ValidationUtils.sanitizeInput(description);
+      final sanitizedNotes = notes != null ? ValidationUtils.sanitizeInput(notes) : null;
+      
       await supabase.from('transactions').insert({
         'type': 'borrow',
         'user_id': userId,
         'amount': amount,
-        'description': description,
+        'description': sanitizedDescription,
         'date': DateUtils.toDateString(date),
         'month_key': monthKey,
-        'notes': notes,
+        'notes': sanitizedNotes,
       });
-    } catch (e) {
-      rethrow;
+    } catch (e, st) {
+      if (e is AppException) rethrow;
+      throw AppException.fromError(e, st);
     }
   }
 }

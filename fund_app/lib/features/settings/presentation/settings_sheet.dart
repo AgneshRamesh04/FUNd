@@ -64,8 +64,28 @@ void showSettings(BuildContext context, WidgetRef ref) {
                 style: TextStyle(color: Colors.red),
               ),
               onTap: () async {
-                await Supabase.instance.client.auth.signOut();
-                Navigator.pop(context);
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Logout?'),
+                    content: const Text('Are you sure you want to log out?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Logout'),
+                      ),
+                    ],
+                  ),
+                ) ?? false;
+                
+                if (confirmed && context.mounted) {
+                  await Supabase.instance.client.auth.signOut();
+                  if (context.mounted) Navigator.pop(context);
+                }
               },
             ),
           ],

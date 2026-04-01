@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/models/app_user.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/app_exception.dart';
 import '../../../core/utils/date_utils.dart' as app_date_utils;
 import '../../../shared/providers/current_user_provider.dart';
 import '../../../shared/providers/all_pool_members_provider.dart';
@@ -30,6 +31,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
   late String _tripName;
   late String _selectedUserId; // Current selected user for "By" field
   late bool _isFundPool; // Toggle for FUNd vs user
+  bool _isSubmitting = false; // Track form submission state
 
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -72,27 +74,15 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
     super.dispose();
   }
 
-  void _updateSelectedUser(String? userId) {
-    if (userId != null) {
-      setState(() {
-        _selectedUserId = userId;
-        _isFundPool = false;
-      });
-    }
-  }
 
-  void _toggleFundPool() {
-    setState(() {
-      _isFundPool = !_isFundPool;
-    });
-  }
 
   Future<void> _pickStartDate() async {
+    final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+      lastDate: now.add(const Duration(days: 180)), // Limit to 6 months in future
     );
     if (picked != null) {
       setState(() => _selectedDate = picked);
@@ -100,11 +90,12 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
   }
 
   Future<void> _pickEndDate() async {
+    final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
       initialDate: _endDate ?? _selectedDate,
       firstDate: _selectedDate,
-      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+      lastDate: now.add(const Duration(days: 180)), // Limit to 6 months in future
     );
     if (picked != null) {
       setState(() => _endDate = picked);
@@ -112,11 +103,12 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
   }
 
   Future<void> _pickDate() async {
+    final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      lastDate: now.add(const Duration(days: 180)), // Limit to 6 months in future
     );
     if (picked != null) {
       setState(() => _selectedDate = picked);
@@ -176,7 +168,11 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
   }
 
   Future<void> _submitToDatabase(bool addAnother) async {
+    if (_isSubmitting) return; // Prevent duplicate submissions
+    
     try {
+      setState(() => _isSubmitting = true);
+      
       final monthKey = app_date_utils.DateUtils.toMonthKey(_selectedDate);
       final userId = _isFundPool ? null : _selectedUserId.trim();
       final notes = _notesController.text.trim().isEmpty ? null : _notesController.text.trim();
@@ -226,35 +222,38 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
         'by': _isFundPool ? 'FUNd Pool' : 'User: $userId',
       };
 
-      setState(() {
-        _createdTransactions.add(transaction);
-      });
+      if (mounted) {
+        setState(() {
+          _createdTransactions.add(transaction);
+          _isSubmitting = false;
+        });
+      }
 
       if (addAnother) {
         _amountController.clear();
         _descriptionController.clear();
         _notesController.clear();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Added! Ready for next entry')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Added! Ready for next entry')),
+          );
+        }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Transaction saved')),
-        );
-        Navigator.of(context).pop();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Transaction saved')),
+          );
+          Navigator.of(context).pop();
+        }
       }
     } catch (e) {
-      String errorMessage = 'An error occurred while saving the transaction';
-      if (e.toString().contains('PgSQLException')) {
-        errorMessage = 'Database error. Please try again.';
-      } else if (e.toString().contains('SocketException')) {
-        errorMessage = 'Network error. Check your connection.';
-      } else if (e.toString().contains('TimeoutException')) {
-        errorMessage = 'Request timed out. Please try again.';
+      final appException = e is Exception ? AppException.fromError(e) : AppException.fromError(Exception(e));
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(appException.getUserFriendlyMessage())),
+        );
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
-      );
     }
   }
 
@@ -285,7 +284,11 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
   }
 
   Future<void> _submitTripToDatabase(bool addAnother) async {
+    if (_isSubmitting) return; // Prevent duplicate submissions
+    
     try {
+      setState(() => _isSubmitting = true);
+      
       await ref.read(sharedExpensesRepositoryProvider).createTrip(
         tripName: _tripNameController.text.trim(),
         startDate: _selectedDate,
@@ -299,36 +302,39 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
         'end_date': DateFormat('yyyy-MM-dd').format(_endDate!),
       };
 
-      setState(() {
-        _createdTrips.add(trip);
-      });
+      if (mounted) {
+        setState(() {
+          _createdTrips.add(trip);
+          _isSubmitting = false;
+        });
+      }
 
       if (addAnother) {
         _tripNameController.clear();
-        setState(() {
-          _endDate = null;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Added! Ready for next trip')),
-        );
+        if (mounted) {
+          setState(() {
+            _endDate = null;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Added! Ready for next trip')),
+          );
+        }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Trip created')),
-        );
-        Navigator.of(context).pop();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Trip created')),
+          );
+          Navigator.of(context).pop();
+        }
       }
     } catch (e) {
-      String errorMessage = 'An error occurred while creating the trip';
-      if (e.toString().contains('PgSQLException')) {
-        errorMessage = 'Database error. Please try again.';
-      } else if (e.toString().contains('SocketException')) {
-        errorMessage = 'Network error. Check your connection.';
-      } else if (e.toString().contains('TimeoutException')) {
-        errorMessage = 'Request timed out. Please try again.';
+      final appException = e is Exception ? AppException.fromError(e) : AppException.fromError(Exception(e));
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(appException.getUserFriendlyMessage())),
+        );
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
-      );
     }
   }
 
@@ -607,7 +613,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
 
             // Add Another button
             OutlinedButton.icon(
-              onPressed: () => _submitForm(addAnother: true),
+              onPressed: _isSubmitting ? null : () => _submitForm(addAnother: true),
               icon: const Icon(Icons.add_rounded, size: 20),
               label: const Text('Add Another Trip'),
               style: OutlinedButton.styleFrom(
@@ -625,7 +631,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
 
             // Submit button
             ElevatedButton(
-              onPressed: () => _submitForm(addAnother: false),
+              onPressed: _isSubmitting ? null : () => _submitForm(addAnother: false),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accent,
                 foregroundColor: Colors.white,
@@ -635,14 +641,23 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                 ),
                 elevation: 2,
               ),
-              child: Text(
-                'Done',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
-              ),
+              child: _isSubmitting
+                  ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Text(
+                      'Done',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
             ),
             const SizedBox(height: 12),
 
@@ -686,14 +701,23 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
             padding: const EdgeInsets.only(right: 16.0),
             child: Center(
               child: GestureDetector(
-                onTap: () => _submitForm(addAnother: false),
-                child: Text(
-                  'Save',
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: AppTheme.accent,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                onTap: _isSubmitting ? null : () => _submitForm(addAnother: false),
+                child: _isSubmitting
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accent),
+                        ),
+                      )
+                    : Text(
+                        'Save',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: AppTheme.accent,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               ),
             ),
           ),
@@ -934,7 +958,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
 
               // Add Another button
               OutlinedButton.icon(
-                onPressed: () => _submitForm(addAnother: true),
+                onPressed: _isSubmitting ? null : () => _submitForm(addAnother: true),
                 icon: const Icon(Icons.add_rounded, size: 20),
                 label: const Text('Add Another'),
                 style: OutlinedButton.styleFrom(

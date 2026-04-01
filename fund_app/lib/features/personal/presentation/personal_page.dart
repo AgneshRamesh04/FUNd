@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/date_utils.dart';
+import 'package:fund_app/core/utils/date_utils.dart' as app_date;
 import '../../../core/utils/username_utils.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/skeleton_loader.dart';
@@ -22,8 +21,10 @@ class PersonalPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final debts = ref.watch(userDebtsProvider).value ?? [];
-    // Generate month key in YYYY-MM format
-    final monthKey = '${selectedMonth.year}-${selectedMonth.month.toString().padLeft(2, '0')}';
+    // Generate month key in YYYY-MM format for backend query
+    // DateUtils.toMonthKey returns 'YYYY-MM-01'
+    // We want 'YYYY-MM'
+    final monthKey = app_date.DateUtils.toMonthKey(selectedMonth).substring(0, 7);
     final txState = ref.watch(personalTransactionsProvider(monthKey));
     final userNames = ref.watch(personalUserNamesProvider).value ?? {};
     final currentUserAsync = ref.watch(currentUserProvider);
@@ -163,35 +164,4 @@ class PersonalPage extends ConsumerWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 48),
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.dividerTheme.color ?? Colors.transparent,
-        ),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            size: 36,
-            color: theme.textTheme.labelMedium?.color,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'No transactions yet',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.textTheme.labelMedium?.color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+

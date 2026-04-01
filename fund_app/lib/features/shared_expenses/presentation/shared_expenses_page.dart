@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/username_utils.dart';
 import '../../../shared/providers/current_user_provider.dart';
+import '../../../core/utils/date_utils.dart' as app_date;
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/skeleton_loader.dart';
 import '../data/shared_expenses_models.dart';
@@ -23,7 +24,7 @@ class SharedExpensesPage extends ConsumerWidget {
     final tripAsync = ref.watch(activeTripProvider);
     final allTripsAsync = ref.watch(allTripsProvider);
     // Generate month key in YYYY-MM format
-    final monthKey = '${selectedMonth.year}-${selectedMonth.month.toString().padLeft(2, '0')}';
+    final monthKey = app_date.DateUtils.toMonthKey(selectedMonth).substring(0, 7);
     final txState = ref.watch(sharedTransactionsProvider(monthKey));
     final userNames = ref.watch(sharedUserNamesProvider).value ?? {};
     final currentUserAsync = ref.watch(currentUserProvider);

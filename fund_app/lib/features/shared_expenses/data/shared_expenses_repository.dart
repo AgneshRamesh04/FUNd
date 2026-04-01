@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/utils/app_exception.dart';
 import '../../../core/utils/date_utils.dart';
+import '../../../core/utils/validation_utils.dart';
 import 'shared_expenses_models.dart';
 
 class SharedExpensesRepository {
@@ -149,6 +150,7 @@ class SharedExpensesRepository {
   }
 
   /// Creates a shared expense or deposit transaction.
+  /// Sanitizes all user inputs before database insertion
   /// Type can be explicitly specified or auto-determined based on userId:
   /// - If type='deposit': always 'deposit'
   /// - If type='shared': userId null → 'pool_expense', userId provided → 'user_paid_for_pool'
@@ -162,6 +164,18 @@ class SharedExpensesRepository {
     String? notes,
   }) async {
     try {
+      // Validate inputs
+      if (!ValidationUtils.isValidAmount(amount)) {
+        throw AppException.validation('Amount must be greater than 0');
+      }
+      if (!ValidationUtils.isValidDescription(description)) {
+        throw AppException.validation('Description cannot be empty');
+      }
+      
+      // Sanitize inputs
+      final sanitizedDescription = ValidationUtils.sanitizeInput(description);
+      final sanitizedNotes = notes != null ? ValidationUtils.sanitizeInput(notes) : null;
+      
       late final String transactionType;
       
       if (type == 'deposit') {
@@ -176,10 +190,10 @@ class SharedExpensesRepository {
         'type': transactionType,
         'user_id': userId,
         'amount': amount,
-        'description': description,
+        'description': sanitizedDescription,
         'date': DateUtils.toDateString(date),
         'month_key': monthKey,
-        'notes': notes,
+        'notes': sanitizedNotes,
       });
     } catch (e, st) {
       throw AppException.fromError(e, st);
@@ -188,6 +202,7 @@ class SharedExpensesRepository {
 
   /// Creates a shared expense transaction.
   /// If userId is null, it's a pool_expense; otherwise, it's user_paid_for_pool.
+  /// Sanitizes all user inputs before database insertion.
   Future<void> createSharedExpense({
     required String? userId,
     required double amount,
@@ -197,16 +212,28 @@ class SharedExpensesRepository {
     String? notes,
   }) async {
     try {
+      // Validate inputs
+      if (!ValidationUtils.isValidAmount(amount)) {
+        throw AppException.validation('Amount must be greater than 0');
+      }
+      if (!ValidationUtils.isValidDescription(description)) {
+        throw AppException.validation('Description cannot be empty');
+      }
+      
+      // Sanitize inputs
+      final sanitizedDescription = ValidationUtils.sanitizeInput(description);
+      final sanitizedNotes = notes != null ? ValidationUtils.sanitizeInput(notes) : null;
+      
       final transactionType = userId == null ? 'pool_expense' : 'user_paid_for_pool';
       
       await supabase.from('transactions').insert({
         'type': transactionType,
         'user_id': userId,
         'amount': amount,
-        'description': description,
+        'description': sanitizedDescription,
         'date': DateUtils.toDateString(date),
         'month_key': monthKey,
-        'notes': notes,
+        'notes': sanitizedNotes,
       });
     } catch (e, st) {
       throw AppException.fromError(e, st);
@@ -214,14 +241,23 @@ class SharedExpensesRepository {
   }
 
   /// Creates a new trip.
+  /// Sanitizes trip name before database insertion.
   Future<void> createTrip({
     required String tripName,
     required DateTime startDate,
     required DateTime endDate,
   }) async {
     try {
+      // Validate inputs
+      if (!ValidationUtils.isValidDescription(tripName)) {
+        throw AppException.validation('Trip name cannot be empty');
+      }
+      
+      // Sanitize trip name
+      final sanitizedTripName = ValidationUtils.sanitizeInput(tripName);
+      
       await supabase.from('trips').insert({
-        'trip_name': tripName,
+        'trip_name': sanitizedTripName,
         'start_date': DateUtils.toDateString(startDate),
         'end_date': DateUtils.toDateString(endDate),
       });

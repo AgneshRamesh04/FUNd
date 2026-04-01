@@ -49,8 +49,14 @@ app.*.map.json
 *.config.dart
 
 # Fund app build directories
+# ignore file for Flutter build "fund_app"
 fund_app/build/
 fund_app/.dart_tool/
+fund_app/.flutter-plugins
+fund_app/.flutter-plugins-dependencies
+fund_app/.packages
+fund_app/.pub-cache/
+fund_app/.pub/
 
 # Android build and cache
 fund_app/android/app/debug/

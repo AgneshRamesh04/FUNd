@@ -9,6 +9,8 @@ import '../../../core/utils/date_utils.dart' as app_date;
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/skeleton_loader.dart';
 import '../../transactions/data/transaction_service.dart';
+import '../../transactions/presentation/transaction_form_page.dart';
+import '../../shell/shell_page.dart';
 import '../data/shared_expenses_models.dart';
 import '../data/shared_expenses_providers.dart';
 import 'widgets/shared_transaction_tile.dart';
@@ -169,7 +171,7 @@ class SharedExpensesPage extends ConsumerWidget {
                         userNames,
                       ),
                       showDivider: i < txState.transactions.length - 1,
-                      onEdit: () => _showEditSharedTransactionDialog(context, ref, tx),
+                      onEdit: () => _editSharedTransaction(context, tx),
                       onDelete: () => _confirmDeleteSharedTransaction(context, ref, tx),
                     );
                 }),
@@ -177,6 +179,21 @@ class SharedExpensesPage extends ConsumerWidget {
             );
           }),
         ],
+      ),
+    );
+  }
+
+  void _editSharedTransaction(BuildContext context, SharedTransaction tx) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => TransactionFormPage(
+          args: TransactionFormArgs(
+            type: 'shared_expense',
+            initialMonth: tx.date,
+            editingTransaction: tx,
+            isEditing: true,
+          ),
+        ),
       ),
     );
   }
@@ -220,90 +237,6 @@ class SharedExpensesPage extends ConsumerWidget {
           SnackBar(content: Text('Delete failed: ${e.toString()}')),
         );
       }
-    }
-  }
-
-  Future<void> _showEditSharedTransactionDialog(
-    BuildContext context,
-    WidgetRef ref,
-    SharedTransaction tx,
-  ) async {
-    final amountController = TextEditingController(text: tx.amount.toStringAsFixed(2));
-    final descController = TextEditingController(text: tx.description ?? '');
-    final notesController = TextEditingController(text: tx.notes ?? '');
-
-    final submitted = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Edit Shared Transaction'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: amountController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(labelText: 'Amount'),
-                ),
-                TextField(
-                  controller: descController,
-                  decoration: const InputDecoration(labelText: 'Description'),
-                ),
-                TextField(
-                  controller: notesController,
-                  decoration: const InputDecoration(labelText: 'Notes'),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-            TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Save')),
-          ],
-        );
-      },
-    );
-
-    if (submitted != true || !context.mounted) return;
-
-    final amount = double.tryParse(amountController.text.trim());
-    if (amount == null || amount <= 0) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter valid amount')),
-      );
-      return;
-    }
-
-    final desc = descController.text.trim();
-    if (desc.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Description cannot be empty')),
-      );
-      return;
-    }
-
-    try {
-      await ref.read(transactionServiceProvider).updateSharedTransaction(
-            id: tx.id,
-            type: tx.type,
-            userId: tx.userId,
-            amount: amount,
-            description: desc,
-            date: tx.date,
-            monthKey: tx.monthKey ?? app_date.DateUtils.toMonthKey(tx.date),
-            notes: notesController.text.trim().isEmpty ? null : notesController.text.trim(),
-          );
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Shared transaction updated')),
-      );
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Update failed: ${e.toString()}')),
-      );
     }
   }
 

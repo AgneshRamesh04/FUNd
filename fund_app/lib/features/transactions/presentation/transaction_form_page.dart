@@ -57,10 +57,38 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
     
     _descriptionFocusNode = FocusNode();
     
+    // Pre-fill form if editing
+    if (widget.args.isEditing && widget.args.editingTransaction != null) {
+      _initializeFromEditingTransaction();
+    }
+    
     // Auto-focus description field after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _descriptionFocusNode.requestFocus();
+      if (!widget.args.isEditing) {
+        _descriptionFocusNode.requestFocus();
+      }
     });
+  }
+
+  void _initializeFromEditingTransaction() {
+    final tx = widget.args.editingTransaction;
+    
+    // Check if it's a SharedTransaction or PersonalTransaction
+    if (tx.runtimeType.toString().contains('SharedTransaction')) {
+      _isFundPool = tx.userId == null;
+      if (!_isFundPool) {
+        _selectedUserId = tx.userId ?? '';
+      }
+    } else {
+      // PersonalTransaction
+      _selectedUserId = tx.userId ?? '';
+      _isFundPool = false;
+    }
+    
+    _selectedDate = tx.date;
+    _amountController.text = tx.amount.toStringAsFixed(2);
+    _descriptionController.text = tx.description ?? '';
+    _notesController.text = tx.notes ?? '';
   }
 
   @override
@@ -114,6 +142,57 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
     }
   }
 
+  void _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Delete'),
+        content: const Text('Are you sure you want to delete this transaction? This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      setState(() => _isSubmitting = true);
+      
+      final tx = widget.args.editingTransaction;
+      final isPersonal = _transactionType == 'personal_expense' || 
+                         _transactionType == 'borrow' ||
+                         _transactionType == 'deposit' ||
+                         _transactionType == 'monthly_obligation';
+
+      if (isPersonal) {
+        await ref.read(transactionServiceProvider).deletePersonalTransaction(tx.id);
+      } else {
+        await ref.read(transactionServiceProvider).deleteSharedTransaction(tx.id);
+      }
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Transaction deleted')),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Delete failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   void _submitForm({bool addAnother = false}) {
     if (_transactionType == 'add_trip') {
       _submitTrip(addAnother);
@@ -163,7 +242,68 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       return;
     }
 
-    _submitToDatabase(addAnother);
+    if (widget.args.isEditing) {
+      _updateTransaction(addAnother);
+    } else {
+      _submitToDatabase(addAnother);
+    }
+  }
+
+  Future<void> _updateTransaction(bool addAnother) async {
+    if (_isSubmitting) return;
+    
+    try {
+      setState(() => _isSubmitting = true);
+      
+      final tx = widget.args.editingTransaction;
+      final monthKey = app_date_utils.DateUtils.toMonthKey(_selectedDate);
+      final userId = _isFundPool ? null : _selectedUserId.trim();
+      final notes = _notesController.text.trim().isEmpty ? null : _notesController.text.trim();
+      final description = _descriptionController.text.trim();
+
+      if (_transactionType == 'personal_expense' || 
+          _transactionType == 'borrow' ||
+          _transactionType == 'deposit' ||
+          _transactionType == 'monthly_obligation') {
+        await ref.read(transactionServiceProvider).updatePersonalTransaction(
+          id: tx.id,
+          userId: userId ?? _selectedUserId,
+          type: tx.type,
+          amount: _amount,
+          description: description,
+          date: _selectedDate,
+          monthKey: monthKey,
+          notes: notes,
+        );
+      } else if (_transactionType == 'shared_expense') {
+        await ref.read(transactionServiceProvider).updateSharedTransaction(
+          id: tx.id,
+          type: tx.type,
+          userId: userId,
+          amount: _amount,
+          description: description,
+          date: _selectedDate,
+          monthKey: monthKey,
+          notes: notes,
+        );
+      }
+
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Transaction updated')),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      final appException = e is Exception ? AppException.fromError(e) : AppException.fromError(Exception(e));
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(appException.getUserFriendlyMessage())),
+        );
+      }
+    }
   }
 
   Future<void> _submitToDatabase(bool addAnother) async {
@@ -690,6 +830,17 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
         centerTitle: true,
         automaticallyImplyLeading: false,
         actions: [
+          if (widget.args.isEditing)
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: Center(
+                child: IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  color: Colors.red,
+                  onPressed: _isSubmitting ? null : () => _confirmDelete(),
+                ),
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: Center(
@@ -705,7 +856,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                         ),
                       )
                     : Text(
-                        'Save',
+                        widget.args.isEditing ? 'Save Changes' : 'Save',
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           color: AppTheme.accent,
                           fontWeight: FontWeight.w600,
@@ -949,19 +1100,20 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                 const SizedBox(height: 16),
               ],
 
-              // Add Another button
-              OutlinedButton.icon(
-                onPressed: _isSubmitting ? null : () => _submitForm(addAnother: true),
-                icon: const Icon(Icons.add_rounded, size: 20),
-                label: const Text('Add Another'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  side: BorderSide(
-                    color: AppTheme.accent.withValues(alpha: 0.3),
-                    width: 1.5,
+              // Add Another button (hidden when editing)
+              if (!widget.args.isEditing)
+                OutlinedButton.icon(
+                  onPressed: _isSubmitting ? null : () => _submitForm(addAnother: true),
+                  icon: const Icon(Icons.add_rounded, size: 20),
+                  label: const Text('Add Another'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    side: BorderSide(
+                      color: AppTheme.accent.withValues(alpha: 0.3),
+                      width: 1.5,
                   ),
                 ),
               ),

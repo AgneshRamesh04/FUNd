@@ -467,13 +467,17 @@ class _AnimatedFabMenuItemState extends State<_AnimatedFabMenuItem>
 class TransactionFormArgs {
   final String type;
   final DateTime initialMonth;
-  final dynamic editingTransaction; // SharedTransaction or PersonalTransaction
+  final dynamic editingTransaction; // SharedTransaction, PersonalTransaction, or TripExpense
   final bool isEditing;
+  final String? tripId; // For trip expense forms
+  final String? tripName; // For trip expense forms
 
   TransactionFormArgs({
     required this.type,
     required this.initialMonth,
     this.editingTransaction,
     this.isEditing = false,
+    this.tripId,
+    this.tripName,
   });
 }

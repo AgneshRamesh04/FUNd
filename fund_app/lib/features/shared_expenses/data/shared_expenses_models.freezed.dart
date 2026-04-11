@@ -344,6 +344,329 @@ abstract class _SharedTransaction extends SharedTransaction {
       throw _privateConstructorUsedError;
 }
 
+TripExpense _$TripExpenseFromJson(Map<String, dynamic> json) {
+  return _TripExpense.fromJson(json);
+}
+
+/// @nodoc
+mixin _$TripExpense {
+  String get id => throw _privateConstructorUsedError;
+  @JsonKey(name: 'trip_id')
+  String get tripId => throw _privateConstructorUsedError;
+  @JsonKey(name: 'user_id')
+  String? get userId => throw _privateConstructorUsedError;
+  String get type =>
+      throw _privateConstructorUsedError; // 'user_paid_for_pool' | 'pool_expense'
+  double get amount => throw _privateConstructorUsedError;
+  String? get description => throw _privateConstructorUsedError;
+  DateTime get date => throw _privateConstructorUsedError;
+  String? get notes => throw _privateConstructorUsedError;
+
+  /// Serializes this TripExpense to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+
+  /// Create a copy of TripExpense
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $TripExpenseCopyWith<TripExpense> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $TripExpenseCopyWith<$Res> {
+  factory $TripExpenseCopyWith(
+    TripExpense value,
+    $Res Function(TripExpense) then,
+  ) = _$TripExpenseCopyWithImpl<$Res, TripExpense>;
+  @useResult
+  $Res call({
+    String id,
+    @JsonKey(name: 'trip_id') String tripId,
+    @JsonKey(name: 'user_id') String? userId,
+    String type,
+    double amount,
+    String? description,
+    DateTime date,
+    String? notes,
+  });
+}
+
+/// @nodoc
+class _$TripExpenseCopyWithImpl<$Res, $Val extends TripExpense>
+    implements $TripExpenseCopyWith<$Res> {
+  _$TripExpenseCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of TripExpense
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? tripId = null,
+    Object? userId = freezed,
+    Object? type = null,
+    Object? amount = null,
+    Object? description = freezed,
+    Object? date = null,
+    Object? notes = freezed,
+  }) {
+    return _then(
+      _value.copyWith(
+            id: null == id
+                ? _value.id
+                : id // ignore: cast_nullable_to_non_nullable
+                      as String,
+            tripId: null == tripId
+                ? _value.tripId
+                : tripId // ignore: cast_nullable_to_non_nullable
+                      as String,
+            userId: freezed == userId
+                ? _value.userId
+                : userId // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            type: null == type
+                ? _value.type
+                : type // ignore: cast_nullable_to_non_nullable
+                      as String,
+            amount: null == amount
+                ? _value.amount
+                : amount // ignore: cast_nullable_to_non_nullable
+                      as double,
+            description: freezed == description
+                ? _value.description
+                : description // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            date: null == date
+                ? _value.date
+                : date // ignore: cast_nullable_to_non_nullable
+                      as DateTime,
+            notes: freezed == notes
+                ? _value.notes
+                : notes // ignore: cast_nullable_to_non_nullable
+                      as String?,
+          )
+          as $Val,
+    );
+  }
+}
+
+/// @nodoc
+abstract class _$$TripExpenseImplCopyWith<$Res>
+    implements $TripExpenseCopyWith<$Res> {
+  factory _$$TripExpenseImplCopyWith(
+    _$TripExpenseImpl value,
+    $Res Function(_$TripExpenseImpl) then,
+  ) = __$$TripExpenseImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({
+    String id,
+    @JsonKey(name: 'trip_id') String tripId,
+    @JsonKey(name: 'user_id') String? userId,
+    String type,
+    double amount,
+    String? description,
+    DateTime date,
+    String? notes,
+  });
+}
+
+/// @nodoc
+class __$$TripExpenseImplCopyWithImpl<$Res>
+    extends _$TripExpenseCopyWithImpl<$Res, _$TripExpenseImpl>
+    implements _$$TripExpenseImplCopyWith<$Res> {
+  __$$TripExpenseImplCopyWithImpl(
+    _$TripExpenseImpl _value,
+    $Res Function(_$TripExpenseImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of TripExpense
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? tripId = null,
+    Object? userId = freezed,
+    Object? type = null,
+    Object? amount = null,
+    Object? description = freezed,
+    Object? date = null,
+    Object? notes = freezed,
+  }) {
+    return _then(
+      _$TripExpenseImpl(
+        id: null == id
+            ? _value.id
+            : id // ignore: cast_nullable_to_non_nullable
+                  as String,
+        tripId: null == tripId
+            ? _value.tripId
+            : tripId // ignore: cast_nullable_to_non_nullable
+                  as String,
+        userId: freezed == userId
+            ? _value.userId
+            : userId // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        type: null == type
+            ? _value.type
+            : type // ignore: cast_nullable_to_non_nullable
+                  as String,
+        amount: null == amount
+            ? _value.amount
+            : amount // ignore: cast_nullable_to_non_nullable
+                  as double,
+        description: freezed == description
+            ? _value.description
+            : description // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        date: null == date
+            ? _value.date
+            : date // ignore: cast_nullable_to_non_nullable
+                  as DateTime,
+        notes: freezed == notes
+            ? _value.notes
+            : notes // ignore: cast_nullable_to_non_nullable
+                  as String?,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$TripExpenseImpl extends _TripExpense {
+  const _$TripExpenseImpl({
+    required this.id,
+    @JsonKey(name: 'trip_id') required this.tripId,
+    @JsonKey(name: 'user_id') this.userId,
+    required this.type,
+    required this.amount,
+    this.description,
+    required this.date,
+    this.notes,
+  }) : super._();
+
+  factory _$TripExpenseImpl.fromJson(Map<String, dynamic> json) =>
+      _$$TripExpenseImplFromJson(json);
+
+  @override
+  final String id;
+  @override
+  @JsonKey(name: 'trip_id')
+  final String tripId;
+  @override
+  @JsonKey(name: 'user_id')
+  final String? userId;
+  @override
+  final String type;
+  // 'user_paid_for_pool' | 'pool_expense'
+  @override
+  final double amount;
+  @override
+  final String? description;
+  @override
+  final DateTime date;
+  @override
+  final String? notes;
+
+  @override
+  String toString() {
+    return 'TripExpense(id: $id, tripId: $tripId, userId: $userId, type: $type, amount: $amount, description: $description, date: $date, notes: $notes)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$TripExpenseImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.tripId, tripId) || other.tripId == tripId) &&
+            (identical(other.userId, userId) || other.userId == userId) &&
+            (identical(other.type, type) || other.type == type) &&
+            (identical(other.amount, amount) || other.amount == amount) &&
+            (identical(other.description, description) ||
+                other.description == description) &&
+            (identical(other.date, date) || other.date == date) &&
+            (identical(other.notes, notes) || other.notes == notes));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(
+    runtimeType,
+    id,
+    tripId,
+    userId,
+    type,
+    amount,
+    description,
+    date,
+    notes,
+  );
+
+  /// Create a copy of TripExpense
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$TripExpenseImplCopyWith<_$TripExpenseImpl> get copyWith =>
+      __$$TripExpenseImplCopyWithImpl<_$TripExpenseImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$TripExpenseImplToJson(this);
+  }
+}
+
+abstract class _TripExpense extends TripExpense {
+  const factory _TripExpense({
+    required final String id,
+    @JsonKey(name: 'trip_id') required final String tripId,
+    @JsonKey(name: 'user_id') final String? userId,
+    required final String type,
+    required final double amount,
+    final String? description,
+    required final DateTime date,
+    final String? notes,
+  }) = _$TripExpenseImpl;
+  const _TripExpense._() : super._();
+
+  factory _TripExpense.fromJson(Map<String, dynamic> json) =
+      _$TripExpenseImpl.fromJson;
+
+  @override
+  String get id;
+  @override
+  @JsonKey(name: 'trip_id')
+  String get tripId;
+  @override
+  @JsonKey(name: 'user_id')
+  String? get userId;
+  @override
+  String get type; // 'user_paid_for_pool' | 'pool_expense'
+  @override
+  double get amount;
+  @override
+  String? get description;
+  @override
+  DateTime get date;
+  @override
+  String? get notes;
+
+  /// Create a copy of TripExpense
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$TripExpenseImplCopyWith<_$TripExpenseImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 TripSummary _$TripSummaryFromJson(Map<String, dynamic> json) {
   return _TripSummary.fromJson(json);
 }

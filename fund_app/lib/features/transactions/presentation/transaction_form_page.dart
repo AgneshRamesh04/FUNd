@@ -286,6 +286,16 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
           monthKey: monthKey,
           notes: notes,
         );
+      } else if (_transactionType == 'trip_expense') {
+        await ref.read(transactionServiceProvider).updateTripExpense(
+          id: tx.id,
+          type: tx.type,
+          userId: userId,
+          amount: _amount,
+          description: description,
+          date: _selectedDate,
+          notes: notes,
+        );
       }
 
       if (mounted) {
@@ -343,6 +353,20 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
           description: description,
           date: _selectedDate,
           monthKey: monthKey,
+          notes: notes,
+        );
+      } else if (_transactionType == 'trip_expense') {
+        final tripId = widget.args.tripId;
+        if (tripId == null) {
+          throw AppException.validation('Trip ID is required for trip expenses');
+        }
+        await ref.read(transactionServiceProvider).createTripExpense(
+          tripId: tripId,
+          isFundPool: _isFundPool,
+          userId: userId,
+          amount: _amount,
+          description: description,
+          date: _selectedDate,
           notes: notes,
         );
       }
@@ -476,6 +500,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       'deposit' => 'Deposit Money',
       'personal_expense' => 'Add Personal Expense',
       'shared_expense' => 'Add Shared Expense',
+      'trip_expense' => 'Add Trip Expense',
       'add_trip' => 'Create Trip',
       _ => 'Add Transaction',
     };
@@ -486,6 +511,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       'deposit' => Icons.savings_outlined,
       'personal_expense' => Icons.receipt_rounded,
       'shared_expense' => Icons.group_outlined,
+      'trip_expense' => Icons.receipt_long_rounded,
       'add_trip' => Icons.luggage_outlined,
       _ => Icons.add_rounded,
     };
@@ -1160,8 +1186,8 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
             .map((u) => {'id': u.id, 'name': u.name, 'type': 'user'})
             .toList();
         
-        // Only add FUNd option for shared expenses
-        if (_transactionType == 'shared_expense') {
+        // Only add FUNd option for shared and trip expenses
+        if (_transactionType == 'shared_expense' || _transactionType == 'trip_expense') {
           options.add({'id': 'fund', 'name': 'FUNd', 'type': 'fund'});
         }
 
@@ -1320,6 +1346,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       'deposit' => 'Deposited By',
       'personal_expense' => 'Borrowed By',
       'shared_expense' => 'Paid By',
+      'trip_expense' => 'Paid By',
       _ => 'By',
     };
   }

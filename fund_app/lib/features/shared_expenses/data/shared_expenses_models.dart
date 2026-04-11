@@ -5,6 +5,8 @@ import '../../../core/utils/date_utils.dart';
 part 'shared_expenses_models.freezed.dart';
 part 'shared_expenses_models.g.dart';
 
+enum TripStatus { ongoing, upcoming, past }
+
 @freezed
 class SharedTransaction with _$SharedTransaction {
   const SharedTransaction._();
@@ -30,7 +32,24 @@ class SharedTransaction with _$SharedTransaction {
   }
 }
 
-enum TripStatus { ongoing, upcoming, past }
+@freezed
+class TripExpense with _$TripExpense {
+  const TripExpense._();
+
+  const factory TripExpense({
+    required String id,
+    @JsonKey(name: 'trip_id') required String tripId,
+    @JsonKey(name: 'user_id') String? userId,
+    required String type, // 'user_paid_for_pool' | 'pool_expense'
+    required double amount,
+    String? description,
+    required DateTime date,
+    String? notes,
+  }) = _TripExpense;
+
+  factory TripExpense.fromJson(Map<String, dynamic> json) =>
+      _$TripExpenseFromJson(json);
+}
 
 @freezed
 class TripSummary with _$TripSummary {

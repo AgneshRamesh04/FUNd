@@ -13,6 +13,7 @@ import '../../transactions/presentation/transaction_form_page.dart';
 import '../../shell/shell_page.dart';
 import '../data/shared_expenses_models.dart';
 import '../data/shared_expenses_providers.dart';
+import 'trip_details_page.dart';
 import 'widgets/shared_transaction_tile.dart';
 
 class SharedExpensesPage extends ConsumerWidget {
@@ -62,7 +63,15 @@ class SharedExpensesPage extends ConsumerWidget {
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _TripCard(trip: trip),
+                      _TripCard(
+                        trip: trip,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TripDetailsPage(trip: trip),
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 12),
                       allTripsAsync.when(
                         data: (trips) {
@@ -278,7 +287,18 @@ class SharedExpensesPage extends ConsumerWidget {
                     final trip = trips[i];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: _TripCard(trip: trip),
+                      child: _TripCard(
+                        trip: trip,
+                        onTap: () {
+                          Navigator.pop(context); // Close modal
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TripDetailsPage(trip: trip),
+                            ),
+                          );
+                        },
+                      ),
                     );
                   }),
                 ),
@@ -341,9 +361,10 @@ class _PoolSummaryCard extends StatelessWidget {
 // ── Trip card ─────────────────────────────────────────────────────────────────
 
 class _TripCard extends StatelessWidget {
-  const _TripCard({required this.trip});
+  const _TripCard({required this.trip, this.onTap});
 
   final TripSummary trip;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -366,91 +387,98 @@ class _TripCard extends StatelessWidget {
       TripStatus.past => ('PAST', const Color(0xFF9CA3AF)),
     };
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.dividerTheme.color ?? Colors.transparent,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  trip.tripName ?? 'Unnamed Trip',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  statusLabel,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: statusColor,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Icon(Icons.calendar_today_rounded,
-                  size: 14,
-                  color: theme.textTheme.labelMedium?.color),
-              const SizedBox(width: 6),
-              Text(dateRange,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: theme.textTheme.labelMedium?.color)),
-              if (trip.durationDays != null) ...[
-                const SizedBox(width: 12),
-                Icon(Icons.access_time_rounded,
-                    size: 14,
-                    color: theme.textTheme.labelMedium?.color),
-                const SizedBox(width: 6),
-                Text(
-                  '${trip.durationDays} day${trip.durationDays == 1 ? '' : 's'}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.textTheme.labelMedium?.color),
-                ),
-              ],
-            ],
-          ),
-          if (trip.totalExpense != null) ...[
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Icon(Icons.receipt_long_rounded,
-                    size: 14,
-                    color: theme.textTheme.labelMedium?.color),
-                const SizedBox(width: 6),
-                Text(
-                  'SGD ${fmt.format(trip.totalExpense!)}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-                Text(' total expenses',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.textTheme.labelMedium?.color)),
-              ],
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: theme.cardTheme.color,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: theme.dividerTheme.color ?? Colors.transparent,
             ),
-          ],
-        ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      trip.tripName ?? 'Unnamed Trip',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      statusLabel,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: statusColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(Icons.calendar_today_rounded,
+                      size: 14,
+                      color: theme.textTheme.labelMedium?.color),
+                  const SizedBox(width: 6),
+                  Text(dateRange,
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.textTheme.labelMedium?.color)),
+                  if (trip.durationDays != null) ...[
+                    const SizedBox(width: 12),
+                    Icon(Icons.access_time_rounded,
+                        size: 14,
+                        color: theme.textTheme.labelMedium?.color),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${trip.durationDays} day${trip.durationDays == 1 ? '' : 's'}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.textTheme.labelMedium?.color),
+                    ),
+                  ],
+                ],
+              ),
+              if (trip.totalExpense != null) ...[
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Icon(Icons.receipt_long_rounded,
+                        size: 14,
+                        color: theme.textTheme.labelMedium?.color),
+                    const SizedBox(width: 6),
+                    Text(
+                      'SGD ${fmt.format(trip.totalExpense!)}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                    Text(' total expenses',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.textTheme.labelMedium?.color)),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

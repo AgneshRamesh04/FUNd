@@ -53,10 +53,15 @@ class RealtimeService {
                 _ref.invalidate(personalTransactionsProvider(monthFamilyKey));
               }
 
-              // Trip list may be affected by transaction trip assignment.
+              // Trip list and trip expenses may be affected by transaction trip assignment.
               if (record.containsKey('trip_id')) {
+                final tripId = record['trip_id'] as String?;
                 _ref.invalidate(activeTripProvider);
                 _ref.invalidate(allTripsProvider);
+                // Invalidate the specific trip's expenses provider
+                if (tripId != null && tripId.isNotEmpty) {
+                  _ref.invalidate(tripExpensesProvider(tripId));
+                }
               }
 
               // Type-specific after-month invalidations

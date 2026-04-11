@@ -151,3 +151,14 @@ final sharedUserNamesProvider =
       .watch(sharedExpensesRepositoryProvider)
       .fetchUserNames();
 });
+
+// ── Trip expenses ─────────────────────────────────────────────────────────────
+
+/// Family provider keyed by tripId for fetching all expenses for a specific trip.
+/// Real-time updates are handled by RealtimeService invalidations.
+final tripExpensesProvider =
+    FutureProvider.family<List<TripExpense>, String>((ref, tripId) async {
+  return ref
+      .watch(sharedExpensesRepositoryProvider)
+      .fetchTripExpenses(tripId);
+});

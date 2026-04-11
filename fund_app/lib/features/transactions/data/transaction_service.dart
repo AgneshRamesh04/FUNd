@@ -133,6 +133,50 @@ class TransactionService {
   Future<void> deleteSharedTransaction(String id) async {
     await _sharedRepository.deleteTransaction(id);
   }
+
+  Future<void> createTripExpense({
+    required String tripId,
+    required bool isFundPool,
+    required String? userId,
+    required double amount,
+    required String description,
+    required DateTime date,
+    String? notes,
+  }) async {
+    final resolvedUserId = isFundPool ? null : userId;
+    await _sharedRepository.createTripExpense(
+      tripId: tripId,
+      userId: resolvedUserId,
+      amount: amount,
+      description: description,
+      date: date,
+      notes: notes,
+    );
+  }
+
+  Future<void> updateTripExpense({
+    required String id,
+    required String type,
+    required String? userId,
+    required double amount,
+    required String description,
+    required DateTime date,
+    String? notes,
+  }) async {
+    await _sharedRepository.updateTripExpense(
+      id: id,
+      type: type,
+      userId: userId,
+      amount: amount,
+      description: description,
+      date: date,
+      notes: notes,
+    );
+  }
+
+  Future<void> deleteTripExpense(String id) async {
+    await _sharedRepository.deleteTripExpense(id);
+  }
 }
 
 final transactionServiceProvider = Provider<TransactionService>((ref) {

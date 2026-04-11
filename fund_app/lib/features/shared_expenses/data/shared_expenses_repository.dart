@@ -314,4 +314,117 @@ class SharedExpensesRepository {
       throw AppException.fromError(e, st);
     }
   }
+
+  /// Fetches all expenses for a specific trip, sorted by date (newest first).
+  Future<List<TripExpense>> fetchTripExpenses(String tripId) async {
+    try {
+      final data = await supabase
+          .from('transactions')
+          .select(
+              'id, trip_id, type, user_id, amount, description, date, notes')
+          .eq('trip_id', tripId)
+          .inFilter('type', ['user_paid_for_pool', 'pool_expense'])
+          .order('date', ascending: false);
+
+      return (data as List)
+          .map((e) => TripExpense.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e, st) {
+      throw AppException.fromError(e, st);
+    }
+  }
+
+  /// Creates a trip expense transaction.
+  /// If userId is null, it's a pool_expense; otherwise, it's user_paid_for_pool.
+  /// Sanitizes all user inputs before database insertion.
+  Future<void> createTripExpense({
+    required String tripId,
+    required String? userId,
+    required double amount,
+    required String description,
+    required DateTime date,
+    String? notes,
+  }) async {
+    try {
+      // Validate inputs
+      if (!ValidationUtils.isValidAmount(amount)) {
+        throw AppException.validation('Amount must be greater than 0');
+      }
+      if (!ValidationUtils.isValidDescription(description)) {
+        throw AppException.validation('Description cannot be empty');
+      }
+
+      // Sanitize inputs
+      final sanitizedDescription = ValidationUtils.sanitizeInput(description);
+      final sanitizedNotes =
+          notes != null ? ValidationUtils.sanitizeInput(notes) : null;
+
+      final transactionType =
+          userId == null ? 'pool_expense' : 'user_paid_for_pool';
+
+      await supabase.from('transactions').insert({
+        'trip_id': tripId,
+        'type': transactionType,
+        'user_id': userId,
+        'amount': amount,
+        'description': sanitizedDescription,
+        'date': DateUtils.toDateString(date),
+        'notes': sanitizedNotes,
+      });
+    } catch (e, st) {
+      throw AppException.fromError(e, st);
+    }
+  }
+
+  /// Updates an existing trip expense.
+  Future<void> updateTripExpense({
+    required String id,
+    required String type,
+    required String? userId,
+    required double amount,
+    required String description,
+    required DateTime date,
+    String? notes,
+  }) async {
+    try {
+      if (id.trim().isEmpty) {
+        throw AppException.validation('Transaction ID is required for update');
+      }
+      if (!ValidationUtils.isValidAmount(amount)) {
+        throw AppException.validation('Amount must be greater than 0');
+      }
+      if (!ValidationUtils.isValidDescription(description)) {
+        throw AppException.validation('Description cannot be empty');
+      }
+
+      final sanitizedDescription = ValidationUtils.sanitizeInput(description);
+      final sanitizedNotes =
+          notes != null ? ValidationUtils.sanitizeInput(notes) : null;
+
+      await supabase.from('transactions').update({
+        'type': type,
+        'user_id': userId,
+        'amount': amount,
+        'description': sanitizedDescription,
+        'date': DateUtils.toDateString(date),
+        'notes': sanitizedNotes,
+      }).eq('id', id);
+    } catch (e, st) {
+      throw AppException.fromError(e, st);
+    }
+  }
+
+  /// Deletes a trip expense by ID.
+  Future<void> deleteTripExpense(String id) async {
+    try {
+      if (id.trim().isEmpty) {
+        throw AppException.validation('Transaction ID is required for delete');
+      }
+      await supabase.from('transactions').delete().eq('id', id);
+    } catch (e, st) {
+      throw AppException.fromError(e, st);
+    }
+  }
+
+
 }

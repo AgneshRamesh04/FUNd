@@ -81,7 +81,7 @@ class TripExpenseTile extends StatelessWidget {
           return false;
         } else {
           onDelete?.call();
-          return false;
+          return true;
         }
       },
       child: InkWell(

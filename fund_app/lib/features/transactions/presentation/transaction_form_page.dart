@@ -502,7 +502,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       'shared_expense' => 'Add Shared Expense',
       'trip_expense' => 'Add Trip Expense',
       'add_trip' => 'Create Trip',
-      _ => 'Add Transaction',
+      _ => 'Edit Transaction',
     };
   }
 
@@ -513,7 +513,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       'shared_expense' => Icons.group_outlined,
       'trip_expense' => Icons.receipt_long_rounded,
       'add_trip' => Icons.luggage_outlined,
-      _ => Icons.add_rounded,
+      _ => Icons.payment_rounded,
     };
   }
 
@@ -848,49 +848,23 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
-          onPressed: () => Navigator.of(context).pop(),
-          tooltip: 'Close',
-        ),
+                icon: const Icon(Icons.close_rounded),
+                onPressed: () => Navigator.of(context).pop(),
+                tooltip: 'Close',
+              ),
         title: Text(_getFormTitle()),
         centerTitle: true,
         automaticallyImplyLeading: false,
         actions: [
           if (widget.args.isEditing)
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: Center(
-                child: IconButton(
-                  icon: const Icon(Icons.delete_outline_rounded),
-                  color: Colors.red,
-                  onPressed: _isSubmitting ? null : () => _confirmDelete(),
-                ),
+            IconButton(
+              icon: const Icon(
+                Icons.delete_outline_rounded,
+                color: Colors.redAccent,
               ),
-            ),
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: Center(
-              child: GestureDetector(
-                onTap: _isSubmitting ? null : () => _submitForm(addAnother: false),
-                child: _isSubmitting
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: const CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accent),
-                        ),
-                      )
-                    : Text(
-                        widget.args.isEditing ? 'Save Changes' : 'Save',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: AppTheme.accent,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-              ),
-            ),
-          ),
+              onPressed: _confirmDelete,
+              tooltip: 'Delete',
+            )
         ],
       ),
       body: Center(
@@ -1143,6 +1117,41 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 24),
+
+              // Save and Cancel buttons at bottom (only when editing)
+              if (widget.args.isEditing) ...[                
+                ElevatedButton(
+                  onPressed: _isSubmitting ? null : () => _submitForm(addAnother: false),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.accent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                  ),
+                  child: _isSubmitting
+                      ? SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Text(
+                          'Save Changes',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                ),
+                const SizedBox(height: 12),
+              ]
             ],
           ),
         ),

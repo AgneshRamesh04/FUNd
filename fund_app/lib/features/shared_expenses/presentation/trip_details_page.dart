@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Added for Haptics
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -31,72 +32,130 @@ class TripDetailsPage extends ConsumerWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(trip.tripName ?? 'Trip Details'),
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ── Trip Info Card ─────────────────────────────────────────
-            _TripInfoCard(trip: trip, theme: theme),
-            const SizedBox(height: 28),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ── Modern Animated App Bar ────────────────────────────────
+          SliverAppBar(
+            expandedHeight: 120.0,
+            floating: false,
+            pinned: true,
+            elevation: 0,
+            scrolledUnderElevation: 2,
+            backgroundColor: theme.scaffoldBackgroundColor,
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(
+                trip.tripName ?? 'Trip Details',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              centerTitle: false,
+              titlePadding: const EdgeInsetsDirectional.only(start: 56, bottom: 16),
+            ),
+          ),
 
-            // ── Trip Expenses ──────────────────────────────────────────
-            Text('TRIP EXPENSES', style: theme.textTheme.labelMedium),
-            const SizedBox(height: 12),
-            tripExpensesAsync.when(
-              data: (expenses) {
-                if (expenses.isEmpty) {
-                  return const TransactionEmptyState();
-                }
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: expenses.length,
-                  itemBuilder: (context, index) {
-                    final expense = expenses[index];
-                    final userName = userNames[expense.userId] ?? 'Unknown';
-                    return TripExpenseTile(
-                      expense: expense,
-                      userName: userName,
-                      showDivider: index < expenses.length - 1,
-                      onEdit: () => _handleEditExpense(
-                        context,
-                        ref,
-                        expense,
-                        currentUserId,
+          // ── Content Area ───────────────────────────────────────────
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _TripInfoCard(trip: trip, theme: theme),
+                const SizedBox(height: 32),
+                
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'TRIP EXPENSES',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        letterSpacing: 1.1,
+                        fontWeight: FontWeight.w700,
+                        color: theme.hintColor,
                       ),
-                      onDelete: () => _handleDeleteExpense(
-                        context,
-                        ref,
-                        expense,
+                    ),
+                    if (tripExpensesAsync.value?.isNotEmpty ?? false)
+                      Text(
+                        '${tripExpensesAsync.value!.length} items',
+                        style: theme.textTheme.labelSmall,
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                tripExpensesAsync.when(
+                  data: (expenses) {
+                    if (expenses.isEmpty) {
+                      return const TransactionEmptyState();
+                    }
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: theme.cardColor,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          )
+                        ],
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: expenses.length,
+                        itemBuilder: (context, index) {
+                          final expense = expenses[index];
+                          final userName = userNames[expense.userId] ?? 'Unknown';
+                          return TripExpenseTile(
+                            expense: expense,
+                            userName: userName,
+                            showDivider: index < expenses.length - 1,
+                            onEdit: () => _handleEditExpense(
+                              context,
+                              ref,
+                              expense,
+                              currentUserId,
+                            ),
+                            onDelete: () => _handleDeleteExpense(
+                              context,
+                              ref,
+                              expense,
+                            ),
+                          );
+                        },
                       ),
                     );
                   },
-                );
-              },
-              loading: () => const Center(
-                child: CircularProgressIndicator(),
-              ),
-              error: (e, _) => ErrorState(
-                message: 'Failed to load trip expenses: $e',
-              ),
+                  loading: () => const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(40.0),
+                      child: CircularProgressIndicator.adaptive(),
+                    ),
+                  ),
+                  error: (e, _) => Center(
+                    child: Text('Failed to load: $e', style: const TextStyle(color: Colors.red)),
+                  ),
+                ),
+              ]),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _handleCreateExpense(context, ref),
-        tooltip: 'Add Expense',
-        child: const Icon(Icons.add),
+        label: const Text('Add Expense'),
+        icon: const Icon(Icons.add),
       ),
     );
   }
 
+  // --- Handlers remain structurally the same but with UX feedback ---
+
   Future<void> _handleCreateExpense(BuildContext context, WidgetRef ref) async {
+    HapticFeedback.lightImpact();
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -111,7 +170,6 @@ class TripDetailsPage extends ConsumerWidget {
         ),
       ),
     );
-    // Real-time subscription is managed globally by RealtimeService
   }
 
   Future<void> _handleEditExpense(
@@ -135,7 +193,6 @@ class TripDetailsPage extends ConsumerWidget {
         ),
       ),
     );
-    // Real-time subscription is managed globally by RealtimeService
   }
 
   Future<void> _handleDeleteExpense(
@@ -143,19 +200,26 @@ class TripDetailsPage extends ConsumerWidget {
     WidgetRef ref,
     TripExpense expense,
   ) async {
+    // HapticFeedback.warningImpact();
+    final theme = Theme.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Delete Expense?'),
-        content: const Text('This action cannot be undone.'),
+        content: const Text('This will permanently remove this item from your trip records.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text('Cancel', style: TextStyle(color: theme.hintColor)),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.error,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -170,9 +234,13 @@ class TripDetailsPage extends ConsumerWidget {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Expense deleted')),
+          SnackBar(
+            content: const Text('Expense deleted'),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
         );
-        // Real-time subscription is managed globally by RealtimeService
+        Navigator.of(context).pop();
       }
     } catch (e) {
       if (context.mounted) {
@@ -201,76 +269,82 @@ class _TripInfoCard extends StatelessWidget {
     final endStr = trip.endDate != null
         ? DateFormat('MMM d, yyyy').format(trip.endDate!)
         : '-';
-    final totalStr = 'SGD ${NumberFormat('#,##0.00').format(trip.totalExpense ?? 0)}';
+    final totalStr = NumberFormat.currency(symbol: 'SGD ', decimalDigits: 2)
+        .format(trip.totalExpense ?? 0);
 
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          )
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Trip name
-            Text(
-              trip.tripName ?? 'Unnamed Trip',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Status badge
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _StatusBadge(trip: trip),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Trip details grid
-            Row(
-              children: [
-                Expanded(
-                  child: _DetailItem(
-                    label: 'Start Date',
-                    value: startStr,
-                    icon: Icons.calendar_today_rounded,
-                    theme: theme,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _DetailItem(
-                    label: 'End Date',
-                    value: endStr,
-                    icon: Icons.calendar_today_rounded,
-                    theme: theme,
-                  ),
+                Text(
+                  '${trip.durationDays ?? 0} days duration',
+                  style: theme.textTheme.labelMedium?.copyWith(color: theme.hintColor),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-
-            Row(
-              children: [
-                Expanded(
-                  child: _DetailItem(
-                    label: 'Duration',
-                    value: '${trip.durationDays ?? 0} days',
-                    icon: Icons.schedule_rounded,
-                    theme: theme,
+            const SizedBox(height: 20),
+            Text(
+              totalStr,
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: AppTheme.negative,
+                letterSpacing: -0.5,
+              ),
+            ),
+            Text(
+              'TOTAL TRIP EXPENDITURE',
+              style: theme.textTheme.labelSmall?.copyWith(
+                letterSpacing: 0.8,
+                color: theme.hintColor,
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Divider(height: 1, thickness: 0.5),
+            ),
+            IntrinsicHeight(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _DetailItem(
+                      label: 'Departure',
+                      value: startStr,
+                      icon: Icons.flight_takeoff_rounded,
+                      theme: theme,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _DetailItem(
-                    label: 'Total Expense',
-                    value: totalStr,
-                    icon: Icons.trending_down_rounded,
-                    theme: theme,
-                    valueColor: AppTheme.negative,
+                  VerticalDivider(
+                    width: 32,
+                    thickness: 1,
+                    color: theme.dividerColor.withOpacity(0.1),
                   ),
-                ),
-              ],
+                  Expanded(
+                    child: _DetailItem(
+                      label: 'Return',
+                      value: endStr,
+                      icon: Icons.flight_land_rounded,
+                      theme: theme,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -286,24 +360,26 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusInfo = switch (trip.status) {
-      TripStatus.ongoing => (label: 'Ongoing', color: AppTheme.positive),
-      TripStatus.upcoming => (label: 'Upcoming', color: AppTheme.accent),
-      TripStatus.past => (label: 'Past', color: Colors.grey),
+    final (label, color) = switch (trip.status) {
+      TripStatus.ongoing => ('Ongoing', AppTheme.positive),
+      TripStatus.upcoming => ('Upcoming', AppTheme.accent),
+      TripStatus.past => ('Past', Colors.grey),
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: statusInfo.color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withOpacity(0.2), width: 1),
       ),
       child: Text(
-        statusInfo.label,
+        label.toUpperCase(),
         style: TextStyle(
-          color: statusInfo.color,
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
+          color: color,
+          fontWeight: FontWeight.w800,
+          fontSize: 10,
+          letterSpacing: 0.5,
         ),
       ),
     );
@@ -332,25 +408,21 @@ class _DetailItem extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(icon, size: 16, color: theme.textTheme.labelSmall?.color),
+            Icon(icon, size: 14, color: theme.hintColor),
             const SizedBox(width: 6),
             Text(
               label,
-              style: theme.textTheme.labelSmall,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(color: theme.hintColor),
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
           value,
           style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.bold,
             color: valueColor,
           ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
         ),
       ],
     );

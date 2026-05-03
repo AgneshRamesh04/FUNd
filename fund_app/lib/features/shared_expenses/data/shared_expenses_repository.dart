@@ -425,6 +425,4 @@ class SharedExpensesRepository {
       throw AppException.fromError(e, st);
     }
   }
-
-
 }

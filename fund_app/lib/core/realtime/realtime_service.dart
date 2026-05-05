@@ -95,7 +95,22 @@ class RealtimeService {
           .subscribe(),
     );
 
-    // ── leave_tracking → leave_summary ───────────────────────────────────────
+    // ── leave_entries / leave_tracking / leave_summary → home leave cards ──
+    _channels.add(
+      _supabase
+          .channel('db-leave-entries')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'leave_entries',
+            callback: (payload) {
+              final year = _extractLeaveYearFromPayload(payload);
+              _ref.invalidate(userLeavesProvider(year));
+            },
+          )
+          .subscribe(),
+    );
+
     _channels.add(
       _supabase
           .channel('db-leave-tracking')
@@ -103,8 +118,24 @@ class RealtimeService {
             event: PostgresChangeEvent.all,
             schema: 'public',
             table: 'leave_tracking',
-            callback: (_) {
-              _ref.invalidate(userLeavesProvider);
+            callback: (payload) {
+              final year = _extractLeaveYearFromPayload(payload);
+              _ref.invalidate(userLeavesProvider(year));
+            },
+          )
+          .subscribe(),
+    );
+
+    _channels.add(
+      _supabase
+          .channel('db-leave-summary')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'leave_summary',
+            callback: (payload) {
+              final year = _extractLeaveYearFromPayload(payload);
+              _ref.invalidate(userLeavesProvider(year));
             },
           )
           .subscribe(),
@@ -116,6 +147,27 @@ class RealtimeService {
 
     final normalized = monthKey.length == 7 ? '$monthKey-01' : monthKey;
     return DateTime.tryParse(normalized);
+  }
+
+  int _extractLeaveYearFromPayload(PostgresChangePayload payload) {
+    final record = payload.newRecord.isNotEmpty
+        ? payload.newRecord
+        : payload.oldRecord;
+
+    final rawYear = record['year'];
+    if (rawYear is int) return rawYear;
+    if (rawYear is String) {
+      final parsed = int.tryParse(rawYear);
+      if (parsed != null) return parsed;
+    }
+
+    final rawLeaveDate = record['leave_date'];
+    if (rawLeaveDate is String) {
+      final parsedDate = DateTime.tryParse(rawLeaveDate);
+      if (parsedDate != null) return parsedDate.year;
+    }
+
+    return DateTime.now().year;
   }
 
   void _invalidateGlobalTransactionProviders() {

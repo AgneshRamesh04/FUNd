@@ -347,7 +347,7 @@ class _ShellPageState extends ConsumerState<ShellPage>
             BottomNavigationBarItem(
                 icon: Icon(Icons.person_rounded), label: 'Personal'),
             BottomNavigationBarItem(
-                icon: Icon(Icons.group_rounded), label: 'Shared'),
+                icon: Icon(Icons.group_rounded), label: 'Shared')
           ],
         ),
       ),

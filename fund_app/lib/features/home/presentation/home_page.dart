@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/providers/current_user_provider.dart';
+import '../../leave/presentation/leave_page.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/skeleton_loader.dart';
 import '../data/home_models.dart';
@@ -113,6 +114,11 @@ class HomePage extends ConsumerWidget {
               ),
               itemCount: leaves.length,
               itemBuilder: (_, i) => LeaveCard(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => LeavePage(initialUserId: leaves[i].userId),
+                  ),
+                ),
                 userId: leaves[i].userId,
                 userName: leaves[i].userName,
                 used: leaves[i].used,

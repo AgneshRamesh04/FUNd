@@ -4,6 +4,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/username_utils.dart';
 
 class LeaveCard extends StatelessWidget {
+  final VoidCallback? onTap;
   final String userId;
   final String userName;
   final int used;
@@ -17,6 +18,7 @@ class LeaveCard extends StatelessWidget {
     required this.used,
     required this.total,
     required this.currentUserId,
+    this.onTap,
   });
 
   @override
@@ -26,7 +28,10 @@ class LeaveCard extends StatelessWidget {
     final color = percent < 0.7 ? AppTheme.positive : AppTheme.warning;
     final remaining = total - used;
 
-    return Container(
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.cardTheme.color,
@@ -96,6 +101,7 @@ class LeaveCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
       ),
     );
   }

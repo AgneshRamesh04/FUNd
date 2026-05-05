@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/providers/current_user_provider.dart';
+import '../../../shared/ui/app_ui.dart';
 import '../../leave/presentation/leave_page.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/skeleton_loader.dart';
@@ -19,7 +20,6 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final poolBalanceAsync = ref.watch(poolBalanceProvider);
     final debtsAsync = ref.watch(userDebtsProvider);
     final leaves =
@@ -33,7 +33,7 @@ class HomePage extends ConsumerWidget {
     );
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+      padding: AppUi.pagePadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -45,7 +45,7 @@ class HomePage extends ConsumerWidget {
               message: e.toString(),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppUi.itemGap),
           // Inflow/Outflow Cards
           Row(
             children: [
@@ -62,7 +62,7 @@ class HomePage extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppUi.compactGap),
               Expanded(
                 child: inflowOutflowAsync.when(
                   data: (inflowOutflow) => InflowOutflowCard(
@@ -78,7 +78,7 @@ class HomePage extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppUi.itemGap),
           // Debt Card
           debtsAsync.when(
             data: (debts) => debts.isEmpty
@@ -100,8 +100,8 @@ class HomePage extends ConsumerWidget {
           ),
           // Leave Tracker
           if (leaves.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text('LEAVE TRACKER', style: theme.textTheme.labelMedium),
+            const SizedBox(height: AppUi.itemGap),
+            const AppSectionTitle('LEAVE TRACKER'),
             const SizedBox(height: 10),
             GridView.builder(
               shrinkWrap: true,

@@ -856,6 +856,26 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
         centerTitle: true,
         automaticallyImplyLeading: false,
         actions: [
+          if (!widget.args.isEditing)
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+              onPressed: _isSubmitting ? null : () => _submitForm(addAnother: false),
+              child: Text(
+                'Save',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           if (widget.args.isEditing)
             IconButton(
               icon: const Icon(
@@ -864,7 +884,8 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
               ),
               onPressed: _confirmDelete,
               tooltip: 'Delete',
-            )
+            ),
+          const SizedBox(width: 6),
         ],
       ),
       body: Center(

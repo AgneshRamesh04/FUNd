@@ -81,7 +81,7 @@ class TripExpenseTile extends StatelessWidget {
           return false;
         } else {
           onDelete?.call();
-          return true;
+          return false;
         }
       },
       child: InkWell(
@@ -93,7 +93,7 @@ class TripExpenseTile extends StatelessWidget {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+                padding: const EdgeInsets.symmetric(vertical: 18),
                 child: Row(
                   children: [
                     // Icon Badge
@@ -113,61 +113,45 @@ class TripExpenseTile extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            expense.description ?? 'Untitled',
+                            userName,
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.bold,
-                              letterSpacing: 0.1,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Text(
-                                userName,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.hintColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  m.label,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: m.color,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
+                          const SizedBox(height: 2),
+                          Text(
+                            '${m.label} • ${DateFormat('MMM d').format(expense.date)}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.hintColor,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
+                          if ((expense.description ?? '').isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              expense.description!,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.hintColor.withValues(alpha: 0.7),
+                                fontStyle: FontStyle.italic,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ],
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
                     // Amount & Date Column
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          amountStr,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          DateFormat('MMM d, yyyy').format(expense.date),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.textTheme.bodySmall?.color
-                                ?.withValues(alpha: 0.6),
-                          ),
-                        ),
-                      ],
+                    Text(
+                      amountStr,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: m.color,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
                     ),
                   ],
                 ),
@@ -175,9 +159,9 @@ class TripExpenseTile extends StatelessWidget {
               if (showDivider)
                 Divider(
                   height: 1,
-                  indent: 60,
-                  endIndent: 20,
-                  color: theme.dividerColor,
+                  thickness: 0.5,
+                  indent: 76,
+                  color: theme.dividerColor.withValues(alpha: 0.1),
                 ),
             ],
           ),

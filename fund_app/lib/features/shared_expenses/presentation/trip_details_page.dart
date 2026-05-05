@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/providers/current_user_provider.dart';
+import '../../../shared/ui/app_feedback.dart';
+import '../../../shared/ui/app_ui.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../transactions/presentation/transaction_form_page.dart';
 import '../../shell/shell_page.dart';
@@ -58,11 +60,11 @@ class TripDetailsPage extends ConsumerWidget {
 
           // ── Content Area ───────────────────────────────────────────
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+            padding: AppUi.pagePadding,
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 _TripInfoCard(trip: trip, theme: theme),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppUi.sectionGap),
                 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -89,18 +91,8 @@ class TripDetailsPage extends ConsumerWidget {
                     if (expenses.isEmpty) {
                       return const TransactionEmptyState();
                     }
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: theme.cardColor,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          )
-                        ],
-                      ),
+                    return AppCardSurface(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: ListView.builder(
                         shrinkWrap: true,
                         padding: EdgeInsets.zero,
@@ -233,20 +225,11 @@ class TripDetailsPage extends ConsumerWidget {
           .deleteTripExpense(expense.id);
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Expense deleted'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-        Navigator.of(context).pop();
+        AppFeedback.showSuccess(context, 'Expense deleted');
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete: $e')),
-        );
+        AppFeedback.showError(context, 'Failed to delete: $e');
       }
     }
   }
@@ -272,21 +255,9 @@ class _TripInfoCard extends StatelessWidget {
     final totalStr = NumberFormat.currency(symbol: 'SGD ', decimalDigits: 2)
         .format(trip.totalExpense ?? 0);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          )
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
+    return AppCardSurface(
+      padding: const EdgeInsets.all(20),
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -333,7 +304,7 @@ class _TripInfoCard extends StatelessWidget {
                   VerticalDivider(
                     width: 32,
                     thickness: 1,
-                    color: theme.dividerColor.withOpacity(0.1),
+                    color: theme.dividerColor.withValues(alpha: 0.1),
                   ),
                   Expanded(
                     child: _DetailItem(
@@ -348,7 +319,6 @@ class _TripInfoCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }
@@ -369,9 +339,9 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.2), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
       ),
       child: Text(
         label.toUpperCase(),
@@ -391,14 +361,12 @@ class _DetailItem extends StatelessWidget {
   final String value;
   final IconData icon;
   final ThemeData theme;
-  final Color? valueColor;
 
   const _DetailItem({
     required this.label,
     required this.value,
     required this.icon,
     required this.theme,
-    this.valueColor,
   });
 
   @override
@@ -421,7 +389,6 @@ class _DetailItem extends StatelessWidget {
           value,
           style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: valueColor,
           ),
         ),
       ],

@@ -7,6 +7,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/username_utils.dart';
 import '../../../shared/providers/all_pool_members_provider.dart';
 import '../../../shared/providers/current_user_provider.dart';
+import '../../../shared/ui/app_feedback.dart';
+import '../../../shared/ui/app_ui.dart';
+import '../../shared_expenses/data/shared_expenses_providers.dart';
 import '../data/leave_models.dart';
 import '../data/leave_providers.dart';
 import 'add_leave_entry_page.dart';
@@ -216,6 +219,11 @@ class _LeavePageState extends ConsumerState<LeavePage>
     final leaveEntriesState = ref.watch(
       leaveEntriesByYearProvider((user.id, _selectedYear)),
     );
+    final tripsAsync = ref.watch(allTripsProvider);
+    final tripNameById = {
+      for (final trip in (tripsAsync.value ?? const []))
+        if (trip.tripId != null) trip.tripId!: (trip.tripName ?? 'Trip')
+    };
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -235,7 +243,7 @@ class _LeavePageState extends ConsumerState<LeavePage>
             error: (e, _) => Text('Error: $e'),
             orElse: () => const SizedBox.shrink(),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppUi.itemGap),
           ElevatedButton.icon(
             onPressed: () => Navigator.of(context)
                 .push(
@@ -296,37 +304,47 @@ class _LeavePageState extends ConsumerState<LeavePage>
               ),
             )
           else
-            ...leaveEntriesState.entries.map(
-              (entry) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Dismissible(
-                  key: ValueKey(entry.id),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    decoration: BoxDecoration(
+            AppCardSurface(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: List.generate(leaveEntriesState.entries.length, (i) {
+                  final entry = leaveEntriesState.entries[i];
+                  return Dismissible(
+                    key: ValueKey(entry.id),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
                       color: Colors.red.shade500,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.delete_outline_rounded, color: Colors.white),
-                        SizedBox(width: 8),
-                        Text(
-                          'Delete',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.delete_outline_rounded, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text(
+                            'Delete',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  onDismissed: (_) => _deleteEntry(userId: user.id, entry: entry),
-                  child: _buildLeaveEntryCard(context, entry),
-                ),
+                    confirmDismiss: (_) async {
+                      await _deleteEntry(userId: user.id, entry: entry);
+                      return false;
+                    },
+                    child: _buildLeaveEntryCard(
+                      context,
+                      entry,
+                      tripName: entry.tripId == null
+                          ? null
+                          : tripNameById[entry.tripId!],
+                      showDivider: i < leaveEntriesState.entries.length - 1,
+                    ),
+                  );
+                }),
               ),
             ),
           const SizedBox(height: 14),
@@ -355,14 +373,10 @@ class _LeavePageState extends ConsumerState<LeavePage>
           .deleteEntry(entry.id);
       ref.invalidate(leaveTrackingProvider((userId, _selectedYear)));
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Leave entry deleted')),
-      );
+      AppFeedback.showSuccess(context, 'Leave entry deleted');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete: $e')),
-      );
+      AppFeedback.showError(context, 'Failed to delete: $e');
     }
   }
 
@@ -372,23 +386,7 @@ class _LeavePageState extends ConsumerState<LeavePage>
         ? (tracking.used / tracking.total) * 100
         : 100;
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppTheme.accent.withValues(alpha: 0.15),
-            AppTheme.accent.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: AppTheme.accent.withValues(alpha: 0.2),
-          width: 1.5,
-        ),
-      ),
-      padding: const EdgeInsets.all(20),
+    return AppCardSurface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -401,7 +399,7 @@ class _LeavePageState extends ConsumerState<LeavePage>
                   Text(
                     'Year ${tracking.year}',
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: Colors.grey.shade700,
+                      color: theme.textTheme.labelMedium?.color,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -418,7 +416,7 @@ class _LeavePageState extends ConsumerState<LeavePage>
                 '${tracking.remaining} left',
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: tracking.remaining > 0 ? AppTheme.accent : Colors.red,
+                  color: tracking.remaining > 0 ? AppTheme.accent : AppTheme.negative,
                 ),
               ),
             ],
@@ -429,9 +427,9 @@ class _LeavePageState extends ConsumerState<LeavePage>
             child: LinearProgressIndicator(
               value: tracking.total > 0 ? utilizationPercent / 100 : 0,
               minHeight: 8,
-              backgroundColor: Colors.white,
+              backgroundColor: theme.dividerColor.withValues(alpha: 0.3),
               valueColor: AlwaysStoppedAnimation<Color>(
-                tracking.isExhausted ? Colors.red : AppTheme.accent,
+                tracking.isExhausted ? AppTheme.negative : AppTheme.accent,
               ),
             ),
           ),
@@ -439,7 +437,7 @@ class _LeavePageState extends ConsumerState<LeavePage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatItem(context, 'Used', '${tracking.used}', Colors.orange),
+              _buildStatItem(context, 'Used', '${tracking.used}', AppTheme.warning),
               _buildStatItem(
                 context,
                 'Total',
@@ -460,7 +458,7 @@ class _LeavePageState extends ConsumerState<LeavePage>
         Text(
           label,
           style: theme.textTheme.labelSmall?.copyWith(
-            color: Colors.grey.shade700,
+            color: theme.textTheme.labelMedium?.color,
           ),
         ),
         const SizedBox(height: 3),
@@ -475,70 +473,84 @@ class _LeavePageState extends ConsumerState<LeavePage>
     );
   }
 
-  Widget _buildLeaveEntryCard(BuildContext context, LeaveEntry entry) {
+  Widget _buildLeaveEntryCard(
+    BuildContext context,
+    LeaveEntry entry, {
+    String? tripName,
+    bool showDivider = true,
+  }) {
     final theme = Theme.of(context);
     final tripIcon =
         entry.tripId != null ? Icons.luggage_rounded : Icons.calendar_today_rounded;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.8),
-          width: 0.8,
-        ),
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: AppTheme.accent.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            padding: const EdgeInsets.all(8),
-            child: Icon(
-              tripIcon,
-              size: 16,
-              color: AppTheme.accent,
-            ),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  entry.description,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppTheme.accent.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  DateFormat('EEEE, MMM d, yyyy').format(entry.leaveDate),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Text(
-                '${entry.daysUsed}d',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: AppTheme.accent,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
+                child: Icon(tripIcon, color: AppTheme.accent, size: 20),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry.description,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      DateFormat('d MMM yyyy').format(entry.leaveDate),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.hintColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    if (tripName != null && tripName.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        tripName,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppTheme.accent,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
                 ),
               ),
+              const SizedBox(width: 12),
+              Text(
+                '${entry.daysUsed}d',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: AppTheme.accent,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        if (showDivider)
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            indent: 76,
+            color: theme.dividerColor.withValues(alpha: 0.1),
+          ),
+      ],
     );
   }
 }

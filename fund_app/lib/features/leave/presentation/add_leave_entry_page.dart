@@ -7,6 +7,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/username_utils.dart';
 import '../../../shared/providers/all_pool_members_provider.dart';
 import '../../../shared/providers/current_user_provider.dart';
+import '../../../shared/ui/app_feedback.dart';
+import '../../../shared/ui/app_ui.dart';
 import '../../shared_expenses/data/shared_expenses_models.dart';
 import '../../shared_expenses/data/shared_expenses_providers.dart';
 import '../data/leave_providers.dart';
@@ -73,6 +75,22 @@ class _AddLeaveEntryPageState extends ConsumerState<AddLeaveEntryPage> {
       return;
     }
 
+    try {
+      final tracking = await ref.read(
+        leaveTrackingProvider((_selectedUserId, widget.year)).future,
+      );
+      final remainingLeaves = tracking?.remaining ?? 0;
+      if (days > remainingLeaves) {
+        _showError(
+          'Not enough leaves available. Remaining: $remainingLeaves day(s).',
+        );
+        return;
+      }
+    } catch (_) {
+      _showError('Unable to validate leave balance right now. Please try again.');
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
     try {
@@ -89,9 +107,7 @@ class _AddLeaveEntryPageState extends ConsumerState<AddLeaveEntryPage> {
       ref.invalidate(leaveSummaryProvider((_selectedUserId, widget.year)));
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Leave entry added successfully')),
-        );
+        AppFeedback.showSuccess(context, 'Leave entry added successfully');
         Navigator.of(context).pop();
       }
     } catch (e) {
@@ -103,9 +119,7 @@ class _AddLeaveEntryPageState extends ConsumerState<AddLeaveEntryPage> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
-    );
+    AppFeedback.showError(context, message);
   }
 
   @override
@@ -118,10 +132,22 @@ class _AddLeaveEntryPageState extends ConsumerState<AddLeaveEntryPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Leave Entry'),
-        centerTitle: true,
+        actions: [
+          TextButton(
+            onPressed: _isSubmitting ? null : _submitForm,
+            child: Text(
+              'Save',
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: AppTheme.accent,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: AppUi.pagePadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -136,8 +162,9 @@ class _AddLeaveEntryPageState extends ConsumerState<AddLeaveEntryPage> {
               },
               orElse: () => const SizedBox.shrink(),
             ),
-            const SizedBox(height: 22),
-            Column(
+            const SizedBox(height: AppUi.itemGap),
+            AppCardSurface(
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -169,8 +196,10 @@ class _AddLeaveEntryPageState extends ConsumerState<AddLeaveEntryPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 22),
-            Column(
+            ),
+            const SizedBox(height: AppUi.itemGap),
+            AppCardSurface(
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -203,8 +232,10 @@ class _AddLeaveEntryPageState extends ConsumerState<AddLeaveEntryPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 22),
-            Column(
+            ),
+            const SizedBox(height: AppUi.itemGap),
+            AppCardSurface(
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -249,7 +280,8 @@ class _AddLeaveEntryPageState extends ConsumerState<AddLeaveEntryPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 22),
+            ),
+            const SizedBox(height: AppUi.itemGap),
             tripsAsync.when(
               data: (trips) {
                 final yearTrips = _filterTripsForYear(trips, widget.year);
@@ -258,7 +290,7 @@ class _AddLeaveEntryPageState extends ConsumerState<AddLeaveEntryPage> {
               loading: () => _buildTripField(theme, const []),
               error: (error, stackTrace) => _buildTripField(theme, const []),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: AppUi.sectionGap),
             ElevatedButton(
               onPressed: _isSubmitting ? null : _submitForm,
               style: ElevatedButton.styleFrom(

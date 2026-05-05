@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 
 import 'package:fund_app/core/utils/date_utils.dart' as app_date;
 import '../../../core/utils/username_utils.dart';
+import '../../../shared/ui/app_feedback.dart';
+import '../../../shared/ui/app_ui.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/skeleton_loader.dart';
 
@@ -38,22 +40,14 @@ class PersonalPage extends ConsumerWidget {
     );
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+      padding: AppUi.pagePadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // ── Total owed to FUNd ────────────────────────────────────────────
-          Text('TOTAL OWED TO FUNd', style: theme.textTheme.labelMedium),
+          const AppSectionTitle('TOTAL OWED TO FUNd'),
           const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: theme.cardTheme.color,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: theme.dividerTheme.color ?? Colors.transparent,
-              ),
-            ),
+          AppCardSurface(
             child: Builder(
               builder: (context) {
                 if (debts.isEmpty) {
@@ -117,11 +111,11 @@ class PersonalPage extends ConsumerWidget {
               },
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: AppUi.sectionGap),
 
           // ── Transactions ──────────────────────────────────────────────
-          Text('PERSONAL TRANSACTIONS', style: theme.textTheme.labelMedium),
-          const SizedBox(height: 12),
+          const AppSectionTitle('PERSONAL TRANSACTIONS'),
+          const SizedBox(height: AppUi.compactGap),
           Builder(
             builder: (_) {
               if (txState.isLoading) {
@@ -137,14 +131,7 @@ class PersonalPage extends ConsumerWidget {
               }
 
               // Transactions are already filtered by the provider (backend query)
-              return Container(
-                decoration: BoxDecoration(
-                  color: theme.cardTheme.color,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: theme.dividerTheme.color ?? Colors.transparent,
-                  ),
-                ),
+              return AppCardSurface(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   children: List.generate(txState.transactions.length, (i) {
@@ -209,14 +196,10 @@ class PersonalPage extends ConsumerWidget {
     try {
       await ref.read(transactionServiceProvider).deletePersonalTransaction(tx.id);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Personal transaction deleted')),
-      );
+      AppFeedback.showSuccess(context, 'Personal transaction deleted');
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Delete failed: ${e.toString()}')),
-        );
+        AppFeedback.showError(context, 'Delete failed: ${e.toString()}');
       }
     }
   }

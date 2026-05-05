@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/username_utils.dart';
 import '../../../shared/providers/current_user_provider.dart';
+import '../../../shared/ui/app_feedback.dart';
+import '../../../shared/ui/app_ui.dart';
 import '../../../core/utils/date_utils.dart' as app_date;
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/skeleton_loader.dart';
@@ -38,12 +40,12 @@ class SharedExpensesPage extends ConsumerWidget {
     );
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+      padding: AppUi.pagePadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // ── Section 1: Total shared expense for the month ─────────────────
-          Text('SHARED THIS MONTH', style: theme.textTheme.labelMedium),
+          const AppSectionTitle('SHARED THIS MONTH'),
           const SizedBox(height: 10),
           poolSummaryAsync.when(
             data: (total) => _PoolSummaryCard(
@@ -53,10 +55,10 @@ class SharedExpensesPage extends ConsumerWidget {
             loading: () => const LinearProgressIndicator(),
             error: (e, _) => ErrorState(message: '$e'),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: AppUi.sectionGap),
 
           // ── Section 2: Active trip ─────────────────────────────────────
-          Text('ACTIVE TRIP', style: theme.textTheme.labelMedium),
+          const AppSectionTitle('ACTIVE TRIP'),
           const SizedBox(height: 10),
           tripAsync.when(
             data: (trip) => trip != null
@@ -141,11 +143,11 @@ class SharedExpensesPage extends ConsumerWidget {
             loading: () => const LinearProgressIndicator(),
             error: (e, _) => ErrorState(message: '$e'),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: AppUi.sectionGap),
 
           // ── Section 3: Shared transactions (no trip) ──────────────────
-          Text('SHARED EXPENSES', style: theme.textTheme.labelMedium),
-          const SizedBox(height: 12),
+          const AppSectionTitle('SHARED EXPENSES'),
+          const SizedBox(height: AppUi.compactGap),
           Builder(builder: (_) {
             if (txState.isLoading) {
               return const TransactionListSkeleton();
@@ -160,14 +162,7 @@ class SharedExpensesPage extends ConsumerWidget {
             }
 
             // Transactions are already filtered by the provider (backend query)
-            return Container(
-              decoration: BoxDecoration(
-                color: theme.cardTheme.color,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: theme.dividerTheme.color ?? Colors.transparent,
-                ),
-              ),
+            return AppCardSurface(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: List.generate(txState.transactions.length, (i) {
@@ -237,14 +232,10 @@ class SharedExpensesPage extends ConsumerWidget {
     try {
       await ref.read(transactionServiceProvider).deleteSharedTransaction(tx.id);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Shared transaction deleted')),
-      );
+      AppFeedback.showSuccess(context, 'Shared transaction deleted');
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Delete failed: ${e.toString()}')),
-        );
+        AppFeedback.showError(context, 'Delete failed: ${e.toString()}');
       }
     }
   }
@@ -326,15 +317,7 @@ class _PoolSummaryCard extends StatelessWidget {
     final theme = Theme.of(context);
     final fmt = NumberFormat('#,##0.00');
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.dividerTheme.color ?? Colors.transparent,
-        ),
-      ),
+    return AppCardSurface(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -515,5 +498,4 @@ class _NoTripCard extends StatelessWidget {
     );
   }
 }
-
 

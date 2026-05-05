@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/ui/app_feedback.dart';
+import '../../../shared/ui/app_ui.dart';
 import '../data/leave_providers.dart';
 
 class ManageLeaveTotalsPage extends ConsumerStatefulWidget {
@@ -56,10 +58,8 @@ class _ManageLeaveTotalsPageState extends ConsumerState<ManageLeaveTotalsPage> {
       if (mounted) {
         // Invalidate and refetch the provider
         ref.invalidate(leaveTrackingProvider((widget.userId, widget.year)));
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Leave total updated successfully')),
-        );
+
+        AppFeedback.showSuccess(context, 'Leave total updated successfully');
         Navigator.of(context).pop();
       }
     } catch (e) {
@@ -71,9 +71,7 @@ class _ManageLeaveTotalsPageState extends ConsumerState<ManageLeaveTotalsPage> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
-    );
+    AppFeedback.showError(context, message);
   }
 
   @override
@@ -86,10 +84,22 @@ class _ManageLeaveTotalsPageState extends ConsumerState<ManageLeaveTotalsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manage Leave Totals'),
-        centerTitle: true,
+        actions: [
+          TextButton(
+            onPressed: _isSubmitting ? null : _submitForm,
+            child: Text(
+              'Save',
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: AppTheme.accent,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: AppUi.pagePadding,
         child: leaveTrackingAsync.maybeWhen(
           data: (tracking) {
             if (tracking == null) {
@@ -107,15 +117,7 @@ class _ManageLeaveTotalsPageState extends ConsumerState<ManageLeaveTotalsPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Current Year Info
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppTheme.accent.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: AppTheme.accent.withValues(alpha: 0.2),
-                      width: 1.5,
-                    ),
-                  ),
+                AppCardSurface(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,7 +125,7 @@ class _ManageLeaveTotalsPageState extends ConsumerState<ManageLeaveTotalsPage> {
                       Text(
                         'Year ${widget.year}',
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: Colors.grey.shade600,
+                          color: theme.textTheme.labelMedium?.color,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -133,12 +135,12 @@ class _ManageLeaveTotalsPageState extends ConsumerState<ManageLeaveTotalsPage> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Used',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: Colors.grey.shade600,
+                                Text(
+                                  'Used',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.textTheme.labelMedium?.color,
+                                  ),
                                 ),
-                              ),
                               const SizedBox(height: 4),
                               Text(
                                 '${tracking.used} days',
@@ -159,7 +161,7 @@ class _ManageLeaveTotalsPageState extends ConsumerState<ManageLeaveTotalsPage> {
                               Text(
                                 'Remaining',
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: Colors.grey.shade600,
+                                  color: theme.textTheme.labelMedium?.color,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -169,7 +171,7 @@ class _ManageLeaveTotalsPageState extends ConsumerState<ManageLeaveTotalsPage> {
                                   fontWeight: FontWeight.w700,
                                   color: tracking.remaining > 0
                                       ? AppTheme.positive
-                                      : Colors.red,
+                                      : AppTheme.negative,
                                 ),
                               ),
                             ],
@@ -179,10 +181,11 @@ class _ManageLeaveTotalsPageState extends ConsumerState<ManageLeaveTotalsPage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppUi.sectionGap),
 
                 // Total Leave Input
-                Column(
+                AppCardSurface(
+                  child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -221,23 +224,16 @@ class _ManageLeaveTotalsPageState extends ConsumerState<ManageLeaveTotalsPage> {
                     Text(
                       'Set the total number of leave days available for ${widget.year}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.grey.shade600,
+                        color: theme.textTheme.labelMedium?.color,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 32),
+                ),
+                const SizedBox(height: AppUi.sectionGap),
 
                 // Info Box
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.blue.shade200,
-                      width: 1,
-                    ),
-                  ),
+                AppCardSurface(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,13 +243,13 @@ class _ManageLeaveTotalsPageState extends ConsumerState<ManageLeaveTotalsPage> {
                           Icon(
                             Icons.info_rounded,
                             size: 20,
-                            color: Colors.blue.shade600,
+                            color: AppTheme.accent,
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'Changing the total will update leave balance',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.blue.shade600,
+                              color: AppTheme.accent,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -263,14 +259,14 @@ class _ManageLeaveTotalsPageState extends ConsumerState<ManageLeaveTotalsPage> {
                       Text(
                         'The total leave days define how many days you can take off in ${widget.year}. Days used are tracked automatically when you add leave entries.',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.blue.shade700,
+                          color: theme.textTheme.bodyMedium?.color,
                           height: 1.5,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppUi.sectionGap),
 
                 // Submit Button
                 ElevatedButton(

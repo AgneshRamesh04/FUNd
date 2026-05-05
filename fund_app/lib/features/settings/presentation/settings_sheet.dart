@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/theme_provider.dart';
+import '../../../shared/ui/app_ui.dart';
 
 void showSettings(BuildContext context, WidgetRef ref) {
+  final theme = Theme.of(context);
   showModalBottomSheet(
     context: context,
     backgroundColor: Theme.of(context).cardColor,
@@ -18,50 +20,54 @@ void showSettings(BuildContext context, WidgetRef ref) {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Settings',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Theme',
-              style: TextStyle(fontWeight: FontWeight.w600),
+              style: theme.textTheme.labelMedium,
             ),
             const SizedBox(height: 10),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('System'),
-              onTap: () {
-                ref.read(themeProvider.notifier).setTheme(ThemeMode.system);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Light'),
-              onTap: () {
-                ref.read(themeProvider.notifier).setTheme(ThemeMode.light);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Dark'),
-              onTap: () {
-                ref.read(themeProvider.notifier).setTheme(ThemeMode.dark);
-                Navigator.pop(context);
-              },
+            AppCardSurface(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Column(
+                children: [
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('System'),
+                    onTap: () {
+                      ref.read(themeProvider.notifier).setTheme(ThemeMode.system);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Light'),
+                    onTap: () {
+                      ref.read(themeProvider.notifier).setTheme(ThemeMode.light);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Dark'),
+                    onTap: () {
+                      ref.read(themeProvider.notifier).setTheme(ThemeMode.dark);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 10),
             const Divider(),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text(
+              title: Text(
                 'Logout',
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(color: theme.colorScheme.error),
               ),
               onTap: () async {
                 final confirmed = await showDialog<bool>(

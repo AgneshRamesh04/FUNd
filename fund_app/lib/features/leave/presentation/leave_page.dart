@@ -13,6 +13,7 @@ import '../../shared_expenses/data/shared_expenses_providers.dart';
 import '../data/leave_models.dart';
 import '../data/leave_providers.dart';
 import 'add_leave_entry_page.dart';
+import 'manage_leave_totals_page.dart';
 
 class LeavePage extends ConsumerStatefulWidget {
   const LeavePage({super.key, this.initialUserId});
@@ -93,7 +94,38 @@ class _LeavePageState extends ConsumerState<LeavePage>
           error: (e, _) => Center(child: Text('Error: $e')),
         ),
       ),
+      floatingActionButton: membersAsync.maybeWhen(
+        data: (_) {
+          final activeUser = _activeUser;
+          if (activeUser == null) return null;
+          return FloatingActionButton.extended(
+            onPressed: () => Navigator.of(context)
+                .push(
+                  MaterialPageRoute(
+                    builder: (context) => AddLeaveEntryPage(
+                      userId: activeUser.id,
+                      year: _selectedYear,
+                    ),
+                  ),
+                )
+                .then((_) {
+                  ref.invalidate(leaveTrackingProvider((activeUser.id, _selectedYear)));
+                  ref.invalidate(leaveEntriesByYearProvider((activeUser.id, _selectedYear)));
+                }),
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Add Leave'),
+          );
+        },
+        orElse: () => null,
+      ),
     );
+  }
+
+  AppUser? get _activeUser {
+    if (_users.isEmpty) return null;
+    final index = _tabController?.index ?? 0;
+    if (index < 0 || index >= _users.length) return _users.first;
+    return _users[index];
   }
 
   void _ensureTabController() {
@@ -254,7 +286,7 @@ class _LeavePageState extends ConsumerState<LeavePage>
             onPressed: () => Navigator.of(context)
                 .push(
                   MaterialPageRoute(
-                    builder: (context) => AddLeaveEntryPage(
+                    builder: (context) => ManageLeaveTotalsPage(
                       userId: user.id,
                       year: _selectedYear,
                     ),
@@ -262,10 +294,9 @@ class _LeavePageState extends ConsumerState<LeavePage>
                 )
                 .then((_) {
                   ref.invalidate(leaveTrackingProvider((user.id, _selectedYear)));
-                  ref.invalidate(leaveEntriesByYearProvider((user.id, _selectedYear)));
                 }),
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Add Leave Entry'),
+            icon: const Icon(Icons.settings_rounded),
+            label: const Text('Leave Settings'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.accent,
               foregroundColor: Colors.white,

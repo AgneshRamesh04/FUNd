@@ -134,7 +134,14 @@ Per user:
 
 # 8. Personal Screen
 
-Displays **Borrow transactions** (Pool → User).
+Displays all **personal transactions** for the selected user and month, plus total outstanding debt owed to the pool.
+
+## Transaction Types Shown
+
+* personal_expense
+* deposit
+* borrow
+* monthly_obligation
 
 ## Fields
 
@@ -146,8 +153,8 @@ Displays **Borrow transactions** (Pool → User).
 
 ## Behavior
 
-* Reduces pool balance
-* Increases user debt
+* Deposits reduce user debt
+* Borrows and personal expenses increase user debt
 
 ---
 
@@ -191,33 +198,48 @@ Allows grouping expenses under trips.
 
 ## 11.1 Transaction Types
 
-* borrow (Pool → User)
+**Personal transactions (per-user)**
+
 * deposit (User → Pool)
-* shared_expense (User → Shared)
+* borrow (Pool → User)
+* personal_expense
+* monthly_obligation
+
+**Shared transactions (pool-level)**
+
+* shared_expense
+* user_paid_for_pool (User lends to pool)
 * pool_expense (Pool → External)
+* trip_expense (expense under a trip)
 
 ---
 
 ## 11.2 Transaction Effects
 
-| Type           | Effect              |
-| -------------- | ------------------- |
-| Borrow         | Pool ↓, User debt ↑ |
-| Deposit        | Pool ↑, User debt ↓ |
-| Shared Expense | Split between users |
-| Pool Expense   | Pool ↓              |
+| Type                | Effect                        |
+| ------------------- | ----------------------------- |
+| Deposit             | Pool ↑, User debt ↓           |
+| Borrow              | Pool ↓, User debt ↑           |
+| Personal Expense    | User debt ↑                   |
+| Monthly Obligation  | Recorded against user         |
+| Shared Expense      | Pool ↓, split between users   |
+| User Paid for Pool  | User lends amount to pool     |
+| Pool Expense        | Pool ↓                        |
+| Trip Expense        | Pool ↓, grouped under trip    |
 
 ---
 
-# 12. Add Transaction Flow
+## 12. Add Transaction Flow
 
-Single reusable form.
+Single reusable form, launched from the context-aware FAB.
 
-## Entry Options
+## Entry Options (vary by active tab)
 
-* Borrow from FUNd
-* Add Money to FUNd
+* Deposit
+* Personal Expense
 * Shared Expense
+* Trip Expense
+* Add Trip
 
 ---
 
@@ -285,10 +307,12 @@ Single reusable form.
 
 * id
 * user_id
-* used
-* balance
-* month
 * year
+* total (total days allocated)
+* used (days consumed)
+* remaining (derived: total − used)
+* created_at
+* updated_at
 
 ---
 

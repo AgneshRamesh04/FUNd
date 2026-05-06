@@ -127,30 +127,36 @@ class _LeavePageState extends ConsumerState<LeavePage>
           context: context,
           builder: (dialogContext) {
             var tempYear = _selectedYear;
-            return AlertDialog(
-              title: const Text('Select year'),
-              content: SizedBox(
-                width: 300,
-                height: 280,
-                child: YearPicker(
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime(DateTime.now().year + 5),
-                  selectedDate: DateTime(_selectedYear),
-                  onChanged: (value) {
-                    tempYear = value.year;
-                  },
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(tempYear),
-                  child: const Text('Apply'),
-                ),
-              ],
+            return StatefulBuilder(
+              builder: (context, setDialogState) {
+                return AlertDialog(
+                  title: const Text('Select year'),
+                  content: SizedBox(
+                    width: 300,
+                    height: 280,
+                    child: YearPicker(
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(DateTime.now().year + 5),
+                      selectedDate: DateTime(tempYear),
+                      onChanged: (value) {
+                        setDialogState(() {
+                          tempYear = value.year;
+                        });
+                      },
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(tempYear),
+                      child: const Text('Apply'),
+                    ),
+                  ],
+                );
+              },
             );
           },
         );
@@ -290,13 +296,13 @@ class _LeavePageState extends ConsumerState<LeavePage>
                     Icon(
                       Icons.calendar_today_rounded,
                       size: 56,
-                      color: Colors.grey.shade400,
+                      color: Theme.of(context).textTheme.labelMedium?.color,
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'No leave entries for $_selectedYear',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey.shade600,
+                            color: Theme.of(context).textTheme.labelMedium?.color,
                           ),
                     ),
                   ],
@@ -352,7 +358,7 @@ class _LeavePageState extends ConsumerState<LeavePage>
             child: Text(
               'Swipe left on an entry to delete',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey.shade500,
+                    color: Theme.of(context).textTheme.labelMedium?.color,
                     letterSpacing: 0.4,
                     fontStyle: FontStyle.italic,
                   ),
@@ -560,12 +566,27 @@ class _ShimmerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(16),
+    return _LoadingPulse(
+      child: AppCardSurface(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            _SkeletonLine(width: 84, height: 12),
+            SizedBox(height: 10),
+            _SkeletonLine(width: 128, height: 18),
+            SizedBox(height: 22),
+            _SkeletonLine(width: double.infinity, height: 8),
+            SizedBox(height: 18),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _SkeletonStat(),
+                _SkeletonStat(),
+              ],
+            ),
+          ],
+        ),
       ),
-      height: 170,
     );
   }
 }
@@ -579,15 +600,108 @@ class _ShimmerList extends StatelessWidget {
       children: List.generate(
         3,
         (index) => Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(12),
+          padding: const EdgeInsets.only(bottom: 10),
+          child: _LoadingPulse(
+            child: AppCardSurface(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: const [
+                  _SkeletonCircle(size: 42),
+                  SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _SkeletonLine(width: 124, height: 14),
+                        SizedBox(height: 8),
+                        _SkeletonLine(width: 96, height: 12),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  _SkeletonLine(width: 28, height: 16),
+                ],
+              ),
             ),
-            height: 88,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _LoadingPulse extends StatelessWidget {
+  const _LoadingPulse({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.65, end: 1),
+      duration: const Duration(milliseconds: 900),
+      curve: Curves.easeInOut,
+      builder: (context, value, builtChild) {
+        return Opacity(opacity: value, child: builtChild);
+      },
+      onEnd: () {},
+      child: child,
+    );
+  }
+}
+
+class _SkeletonStat extends StatelessWidget {
+  const _SkeletonStat();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      children: [
+        _SkeletonLine(width: 44, height: 10),
+        SizedBox(height: 6),
+        _SkeletonLine(width: 32, height: 14),
+      ],
+    );
+  }
+}
+
+class _SkeletonCircle extends StatelessWidget {
+  const _SkeletonCircle({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.surfaceContainerHighest;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+    );
+  }
+}
+
+class _SkeletonLine extends StatelessWidget {
+  const _SkeletonLine({
+    required this.width,
+    required this.height,
+  });
+
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.surfaceContainerHighest;
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(999),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:fund_app/core/utils/date_utils.dart' as app_date;
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/username_utils.dart';
 import '../../../shared/ui/app_feedback.dart';
 import '../../../shared/ui/app_ui.dart';
@@ -181,11 +182,16 @@ class PersonalPage extends ConsumerWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16)),
           title: const Text('Confirm delete'),
           content: const Text('Delete this transaction? This cannot be undone.'),
           actions: [
             TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-            TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete',
+                  style: TextStyle(color: AppTheme.negative))),
           ],
         );
       },

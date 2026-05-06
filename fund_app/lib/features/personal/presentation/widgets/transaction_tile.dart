@@ -27,7 +27,7 @@ import '../../data/personal_models.dart';
       _ => (
         label: type,
         icon: Icons.payment_rounded,
-        color: Colors.grey,
+        color: const Color(0xFF9CA3AF),
         sign: '',
       ),
     };

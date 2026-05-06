@@ -153,7 +153,7 @@ class _ManageLeaveTotalsPageState extends ConsumerState<ManageLeaveTotalsPage> {
                           Container(
                             width: 1,
                             height: 40,
-                            color: Colors.grey.shade300,
+                            color: Theme.of(context).dividerColor,
                           ),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,

@@ -128,7 +128,8 @@ class TripDetailsPage extends ConsumerWidget {
                     ),
                   ),
                   error: (e, _) => Center(
-                    child: Text('Failed to load: $e', style: const TextStyle(color: Colors.red)),
+                    child: Text('Failed to load: $e',
+                        style: const TextStyle(color: AppTheme.negative)),
                   ),
                 ),
               ]),
@@ -197,7 +198,7 @@ class TripDetailsPage extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Delete Expense?'),
         content: const Text('This will permanently remove this item from your trip records.'),
         actions: [
@@ -333,7 +334,7 @@ class _StatusBadge extends StatelessWidget {
     final (label, color) = switch (trip.status) {
       TripStatus.ongoing => ('Ongoing', AppTheme.positive),
       TripStatus.upcoming => ('Upcoming', AppTheme.accent),
-      TripStatus.past => ('Past', Colors.grey),
+      TripStatus.past => ('Past', const Color(0xFF9CA3AF)),
     };
 
     return Container(

@@ -211,6 +211,8 @@ class SharedExpensesPage extends ConsumerWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16)),
           title: const Text('Confirm delete'),
           content: const Text('Delete this transaction? This cannot be undone.'),
           actions: [
@@ -220,7 +222,8 @@ class SharedExpensesPage extends ConsumerWidget {
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete'),
+              child: const Text('Delete',
+                  style: TextStyle(color: AppTheme.negative)),
             ),
           ],
         );

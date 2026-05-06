@@ -8,6 +8,7 @@ import '../../../core/utils/app_exception.dart';
 import '../../../core/utils/date_utils.dart' as app_date_utils;
 import '../../../shared/providers/current_user_provider.dart';
 import '../../../shared/providers/all_pool_members_provider.dart';
+import '../../../shared/ui/app_feedback.dart';
 import '../data/transaction_service.dart';
 import '../../shell/shell_page.dart';
 
@@ -146,6 +147,8 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16)),
         title: const Text('Confirm Delete'),
         content: const Text('Are you sure you want to delete this transaction? This cannot be undone.'),
         actions: [
@@ -155,7 +158,8 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Delete',
+                style: TextStyle(color: AppTheme.negative)),
           ),
         ],
       ),
@@ -179,16 +183,12 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       }
 
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Transaction deleted')),
-      );
+      AppFeedback.showSuccess(context, 'Transaction deleted');
       Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Delete failed: ${e.toString()}')),
-        );
+        AppFeedback.showError(context, 'Delete failed: ${e.toString()}');
       }
     }
   }
@@ -203,42 +203,32 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
 
   void _submitTransaction(bool addAnother) {
     if (_amountController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter an amount')),
-      );
+      AppFeedback.showError(context, 'Please enter an amount');
       return;
     }
 
     _amount = double.tryParse(_amountController.text) ?? 0;
 
     if (_amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Amount must be greater than 0')),
-      );
+      AppFeedback.showError(context, 'Amount must be greater than 0');
       return;
     }
 
     // Validate description
     if (_descriptionController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a description')),
-      );
+      AppFeedback.showError(context, 'Please enter a description');
       return;
     }
 
     // Validate user selection for user-specific transactions
     if (!_isFundPool && _selectedUserId.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a user')),
-      );
+      AppFeedback.showError(context, 'Please select a user');
       return;
     }
 
     // Validate: Deposit must always have a user (not FUNd)
     if (_transactionType == 'deposit' && _isFundPool) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Deposit must be by a specific user, not FUNd')),
-      );
+      AppFeedback.showError(context, 'Deposit must be by a specific user, not FUNd');
       return;
     }
 
@@ -300,18 +290,14 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
 
       if (mounted) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Transaction updated')),
-        );
+        AppFeedback.showSuccess(context, 'Transaction updated');
         Navigator.of(context).pop();
       }
     } catch (e) {
       final appException = e is Exception ? AppException.fromError(e) : AppException.fromError(Exception(e));
       if (mounted) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(appException.getUserFriendlyMessage())),
-        );
+        AppFeedback.showError(context, appException.getUserFriendlyMessage());
       }
     }
   }
@@ -391,15 +377,11 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
         _descriptionController.clear();
         _notesController.clear();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Added! Ready for next entry')),
-          );
+          AppFeedback.showSuccess(context, 'Added! Ready for next entry');
         }
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Transaction saved')),
-          );
+          AppFeedback.showSuccess(context, 'Transaction saved');
           Navigator.of(context).pop();
         }
       }
@@ -407,33 +389,25 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       final appException = e is Exception ? AppException.fromError(e) : AppException.fromError(Exception(e));
       if (mounted) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(appException.getUserFriendlyMessage())),
-        );
+        AppFeedback.showError(context, appException.getUserFriendlyMessage());
       }
     }
   }
 
   void _submitTrip(bool addAnother) {
     if (_tripNameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a trip name')),
-      );
+      AppFeedback.showError(context, 'Please enter a trip name');
       return;
     }
 
     if (_endDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select both start and end dates')),
-      );
+      AppFeedback.showError(context, 'Please select both start and end dates');
       return;
     }
 
     // Validate: end date must be after start date
     if (_endDate!.isBefore(_selectedDate) || _endDate!.isAtSameMomentAs(_selectedDate)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('End date must be after start date')),
-      );
+      AppFeedback.showError(context, 'End date must be after start date');
       return;
     }
 
@@ -472,15 +446,11 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
           setState(() {
             _endDate = null;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Added! Ready for next trip')),
-          );
+          AppFeedback.showSuccess(context, 'Added! Ready for next trip');
         }
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Trip created')),
-          );
+          AppFeedback.showSuccess(context, 'Trip created');
           Navigator.of(context).pop();
         }
       }
@@ -488,9 +458,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       final appException = e is Exception ? AppException.fromError(e) : AppException.fromError(Exception(e));
       if (mounted) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(appException.getUserFriendlyMessage())),
-        );
+        AppFeedback.showError(context, appException.getUserFriendlyMessage());
       }
     }
   }
@@ -798,7 +766,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                elevation: 2,
+                elevation: 0,
               ),
               child: _isSubmitting
                   ? SizedBox(
@@ -865,7 +833,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                elevation: 2,
+                elevation: 0,
               ),
               onPressed: _isSubmitting ? null : () => _submitForm(addAnother: false),
               child: Text(
@@ -1151,7 +1119,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    elevation: 2,
+                    elevation: 0,
                   ),
                   child: _isSubmitting
                       ? SizedBox(

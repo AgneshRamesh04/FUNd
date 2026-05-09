@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../ui/app_ui.dart';
+
 /// Skeleton loader for card placeholders during data loading
 class CardSkeleton extends StatefulWidget {
   const CardSkeleton({super.key});
@@ -37,37 +39,32 @@ class _CardSkeletonState extends State<CardSkeleton>
     final theme = Theme.of(context);
     return FadeTransition(
       opacity: _animation,
-      child: Container(
+      child: SizedBox(
         height: 100,
-        decoration: BoxDecoration(
-          color: theme.cardTheme.color ?? Colors.grey[300],
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: theme.dividerTheme.color ?? Colors.transparent,
+        child: AppCardSurface(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Container(
+                height: 12,
+                width: 100,
+                decoration: BoxDecoration(
+                  color: theme.dividerTheme.color ?? Colors.grey[400],
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              Container(
+                height: 24,
+                width: 150,
+                decoration: BoxDecoration(
+                  color: theme.dividerTheme.color ?? Colors.grey[400],
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+            ],
           ),
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            Container(
-              height: 12,
-              width: 100,
-              decoration: BoxDecoration(
-                color: theme.dividerTheme.color ?? Colors.grey[400],
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-            Container(
-              height: 24,
-              width: 150,
-              decoration: BoxDecoration(
-                color: theme.dividerTheme.color ?? Colors.grey[400],
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -114,14 +111,8 @@ class _TransactionListSkeletonState extends State<TransactionListSkeleton>
     final theme = Theme.of(context);
     return FadeTransition(
       opacity: _animation,
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.cardTheme.color ?? Colors.grey[300],
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: theme.dividerTheme.color ?? Colors.transparent,
-          ),
-        ),
+      child: AppCardSurface(
+        padding: EdgeInsets.zero,
         child: Column(
           children: List.generate(
             widget.itemCount,

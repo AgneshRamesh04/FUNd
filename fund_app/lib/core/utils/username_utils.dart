@@ -1,5 +1,3 @@
-/// Utility functions for personalizing username display
-
 /// Returns "you" if the userId matches the currentUserId, otherwise returns the display name
 String getDisplayName(
   String userId,
@@ -8,8 +6,7 @@ String getDisplayName(
 ) {
   if (userId == currentUserId) {
     return 'You';
-  }
-  else if(userId == ''){
+  } else if (userId.isEmpty) {
     return 'FUNd';
   }
   return userNames[userId] ?? 'Unknown';

@@ -17,7 +17,11 @@ class DateUtils {
 
   /// Gets the last day of the month
   static DateTime lastDayOfMonth(DateTime date) {
-    return DateTime(date.year, date.month + 1, 1).subtract(const Duration(days: 1));
+    return DateTime(
+      date.year,
+      date.month + 1,
+      1,
+    ).subtract(const Duration(days: 1));
   }
 
   /// Normalizes a date to start of day (00:00:00)

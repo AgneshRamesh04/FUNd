@@ -10,8 +10,10 @@ class HomeRepository {
 
   Future<double> fetchPoolBalance() async {
     try {
-      final response =
-          await supabase.from('pool_balance').select('pool_balance').single();
+      final response = await supabase
+          .from('pool_balance')
+          .select('pool_balance')
+          .single();
       return (response['pool_balance'] as num?)?.toDouble() ?? 0.0;
     } catch (e, st) {
       throw AppException.fromError(e, st);
@@ -20,8 +22,9 @@ class HomeRepository {
 
   Future<List<UserDebt>> fetchUserDebts() async {
     try {
-      final data =
-          await supabase.from('user_debt').select('user_id, username, debt');
+      final data = await supabase
+          .from('user_debt')
+          .select('user_id, username, debt');
       return (data as List)
           .map((d) => UserDebt.fromJson(d as Map<String, dynamic>))
           .toList();

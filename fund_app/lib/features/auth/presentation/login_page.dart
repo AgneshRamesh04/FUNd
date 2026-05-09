@@ -45,7 +45,9 @@ class _LoginPageState extends State<LoginPage> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: AppUi.pageHorizontalPadding),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppUi.pageHorizontalPadding,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -72,10 +74,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    Text(
-                      'FUNd',
-                      style: theme.textTheme.headlineMedium,
-                    ),
+                    Text('FUNd', style: theme.textTheme.headlineMedium),
                     const SizedBox(height: 6),
                     Text(
                       'Finance made FUN',
@@ -121,7 +120,10 @@ class _LoginPageState extends State<LoginPage> {
                 if (error != null) ...[
                   const SizedBox(height: AppUi.compactGap),
                   AppCardSurface(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     child: Row(
                       children: [
                         const Icon(
@@ -132,7 +134,10 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(width: 8),
                         Text(
                           error!,
-                          style: const TextStyle(fontSize: 13, color: AppTheme.negative),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.negative,
+                          ),
                         ),
                       ],
                     ),
@@ -151,8 +156,9 @@ class _LoginPageState extends State<LoginPage> {
                             width: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
                         : const Text('Sign in'),

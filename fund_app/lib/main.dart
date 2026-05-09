@@ -14,17 +14,21 @@ void main() async {
   } catch (e) {
     // .env file is not required for release builds
     // Environment variables can be configured via build args or system env
-    debugPrint('Note: .env file not found. Falling back to system environment variables.');
+    debugPrint(
+      'Note: .env file not found. Falling back to system environment variables.',
+    );
   }
 
   // Safely retrieve environment variables with fallbacks
   String supabaseUrl = '';
   String supabaseAnonKey = '';
-  
+
   try {
-    supabaseUrl = dotenv.env['SUPABASE_URL'] ?? 
+    supabaseUrl =
+        dotenv.env['SUPABASE_URL'] ??
         const String.fromEnvironment('SUPABASE_URL');
-    supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? 
+    supabaseAnonKey =
+        dotenv.env['SUPABASE_ANON_KEY'] ??
         const String.fromEnvironment('SUPABASE_ANON_KEY');
   } catch (e) {
     // If dotenv is not initialized, try const from environment
@@ -39,10 +43,7 @@ void main() async {
     );
   }
 
-  await Supabase.initialize(
-    url: supabaseUrl,
-    anonKey: supabaseAnonKey,
-  );
+  await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
 
   runApp(const ProviderScope(child: MyApp()));
 }

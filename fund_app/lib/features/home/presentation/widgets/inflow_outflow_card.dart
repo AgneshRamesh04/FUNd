@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/ui/app_ui.dart';
 
 class InflowOutflowCard extends StatelessWidget {
   final String title;
@@ -19,18 +20,12 @@ class InflowOutflowCard extends StatelessWidget {
     final theme = Theme.of(context);
     final color = positive ? AppTheme.positive : AppTheme.negative;
     final bgColor = color.withValues(alpha: 0.08);
-    final iconData =
-        positive ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded;
+    final iconData = positive
+        ? Icons.arrow_downward_rounded
+        : Icons.arrow_upward_rounded;
 
-    return Container(
+    return AppCardSurface(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.dividerTheme.color ?? Colors.transparent,
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -49,10 +44,7 @@ class InflowOutflowCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            'SGD',
-            style: theme.textTheme.labelSmall,
-          ),
+          Text('SGD', style: theme.textTheme.labelSmall),
           const SizedBox(height: 2),
           Text(
             amount.toStringAsFixed(2),

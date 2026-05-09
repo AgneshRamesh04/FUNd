@@ -8,6 +8,7 @@ import 'package:month_picker_dialog/month_picker_dialog.dart';
 import '../../core/realtime/realtime_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../shared/providers/current_user_provider.dart';
+import '../../shared/ui/app_ui.dart';
 import '../home/data/home_providers.dart';
 import '../home/presentation/home_page.dart';
 import '../personal/data/personal_providers.dart';
@@ -52,7 +53,9 @@ class _ShellPageState extends ConsumerState<ShellPage>
       context: context,
       initialDate: _selectedMonth,
       firstDate: DateTime(2020),
-      lastDate: now.add(const Duration(days: 180)), // Limit to 6 months in future
+      lastDate: now.add(
+        const Duration(days: 180),
+      ), // Limit to 6 months in future
     );
     if (picked != null) setState(() => _selectedMonth = picked);
   }
@@ -77,7 +80,8 @@ class _ShellPageState extends ConsumerState<ShellPage>
       '/transaction-form',
       arguments: TransactionFormArgs(
         type: type,
-        initialMonth: DateTime.now(), //today, but user can change it in the form
+        initialMonth:
+            DateTime.now(), //today, but user can change it in the form
       ),
     );
   }
@@ -92,17 +96,36 @@ class _ShellPageState extends ConsumerState<ShellPage>
 
   List<({String label, String type, IconData icon})> _getFabMenuItems() {
     return switch (_currentIndex) {
-      0 => [ // Home tab
+      0 => [
+        // Home tab
         (label: 'Deposit', type: 'deposit', icon: Icons.savings_outlined),
-        (label: 'Shared Expense', type: 'shared_expense', icon: Icons.group_outlined),
-        (label: 'Personal Expense', type: 'personal_expense', icon: Icons.receipt_rounded),
+        (
+          label: 'Shared Expense',
+          type: 'shared_expense',
+          icon: Icons.group_outlined,
+        ),
+        (
+          label: 'Personal Expense',
+          type: 'personal_expense',
+          icon: Icons.receipt_rounded,
+        ),
       ],
-      1 => [ // Personal tab
-        (label: 'Personal Expense', type: 'personal_expense', icon: Icons.receipt_rounded),
+      1 => [
+        // Personal tab
+        (
+          label: 'Personal Expense',
+          type: 'personal_expense',
+          icon: Icons.receipt_rounded,
+        ),
         (label: 'Deposit', type: 'deposit', icon: Icons.savings_outlined),
       ],
-      2 => [ // Shared tab
-        (label: 'Shared Expense', type: 'shared_expense', icon: Icons.group_outlined),
+      2 => [
+        // Shared tab
+        (
+          label: 'Shared Expense',
+          type: 'shared_expense',
+          icon: Icons.group_outlined,
+        ),
         (label: 'Add Trip', type: 'add_trip', icon: Icons.luggage_outlined),
       ],
       _ => [],
@@ -150,11 +173,17 @@ class _ShellPageState extends ConsumerState<ShellPage>
             backgroundColor: AppTheme.accent,
             foregroundColor: Colors.white,
             elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: AnimatedRotation(
-              turns: _fabMenuExpanded ? 0.125 : 0, // 45 degrees
-              duration: const Duration(milliseconds: 200),
-              child: const Icon(Icons.add_rounded),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: AnimatedScale(
+              scale: _fabMenuExpanded ? 1.08 : 1,
+              duration: const Duration(milliseconds: 180),
+              child: AnimatedRotation(
+                turns: _fabMenuExpanded ? 0.125 : 0, // 45 degrees
+                duration: const Duration(milliseconds: 200),
+                child: const Icon(Icons.add_rounded),
+              ),
             ),
           ),
         ),
@@ -204,7 +233,7 @@ class _ShellPageState extends ConsumerState<ShellPage>
         automaticallyImplyLeading: false,
         titleSpacing: 0,
         title: Padding(
-          padding: const EdgeInsets.only(left: 20.0),
+          padding: const EdgeInsets.only(left: AppUi.pageHorizontalPadding),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -265,9 +294,13 @@ class _ShellPageState extends ConsumerState<ShellPage>
         actions: [
           userAsync.maybeWhen(
             data: (user) {
-              final letter = user.name.isNotEmpty ? user.name[0].toUpperCase() : '?';
+              final letter = user.name.isNotEmpty
+                  ? user.name[0].toUpperCase()
+                  : '?';
               return Padding(
-                padding: const EdgeInsets.only(right: 20.0),
+                padding: const EdgeInsets.only(
+                  right: AppUi.pageHorizontalPadding,
+                ),
                 child: GestureDetector(
                   onTap: () => showSettings(context, ref),
                   child: Container(
@@ -291,7 +324,7 @@ class _ShellPageState extends ConsumerState<ShellPage>
               );
             },
             orElse: () => const Padding(
-              padding: EdgeInsets.only(right: 20.0),
+              padding: EdgeInsets.only(right: AppUi.pageHorizontalPadding),
               child: SizedBox(width: 36, height: 36),
             ),
           ),
@@ -343,11 +376,17 @@ class _ShellPageState extends ConsumerState<ShellPage>
           elevation: 0,
           items: const [
             BottomNavigationBarItem(
-                icon: Icon(Icons.home_rounded), label: 'Home'),
+              icon: Icon(Icons.home_rounded),
+              label: 'Home',
+            ),
             BottomNavigationBarItem(
-                icon: Icon(Icons.person_rounded), label: 'Personal'),
+              icon: Icon(Icons.person_rounded),
+              label: 'Personal',
+            ),
             BottomNavigationBarItem(
-                icon: Icon(Icons.group_rounded), label: 'Shared')
+              icon: Icon(Icons.group_rounded),
+              label: 'Shared',
+            ),
           ],
         ),
       ),
@@ -388,15 +427,15 @@ class _AnimatedFabMenuItemState extends State<_AnimatedFabMenuItem>
       vsync: this,
     );
 
-    _scaleAnimation =
-        Tween<double>(begin: 0.0, end: 1.0).animate(
-          CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-        );
+    _scaleAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
 
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0.3, 0), end: Offset.zero).animate(
-          CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-        );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.3, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     Future.delayed(widget.delay, () {
       if (mounted) _controller.forward();
@@ -439,11 +478,7 @@ class _AnimatedFabMenuItemState extends State<_AnimatedFabMenuItem>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    widget.icon,
-                    size: 18,
-                    color: AppTheme.accent,
-                  ),
+                  Icon(widget.icon, size: 18, color: AppTheme.accent),
                   const SizedBox(width: 8),
                   Text(
                     widget.label,
@@ -467,7 +502,8 @@ class _AnimatedFabMenuItemState extends State<_AnimatedFabMenuItem>
 class TransactionFormArgs {
   final String type;
   final DateTime initialMonth;
-  final dynamic editingTransaction; // SharedTransaction, PersonalTransaction, or TripExpense
+  final dynamic
+  editingTransaction; // SharedTransaction, PersonalTransaction, or TripExpense
   final bool isEditing;
   final String? tripId; // For trip expense forms
   final String? tripName; // For trip expense forms

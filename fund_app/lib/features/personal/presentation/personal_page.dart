@@ -31,7 +31,9 @@ class PersonalPage extends ConsumerWidget {
     // Generate month key in YYYY-MM format for backend query
     // DateUtils.toMonthKey returns 'YYYY-MM-01'
     // We want 'YYYY-MM'
-    final monthKey = app_date.DateUtils.toMonthKey(selectedMonth).substring(0, 7);
+    final monthKey = app_date.DateUtils.toMonthKey(
+      selectedMonth,
+    ).substring(0, 7);
     final txState = ref.watch(personalTransactionsProvider(monthKey));
     final userNames = ref.watch(personalUserNamesProvider).value ?? {};
     final currentUserAsync = ref.watch(currentUserProvider);
@@ -59,10 +61,13 @@ class PersonalPage extends ConsumerWidget {
                     ),
                   );
                 }
-                
-                final totalDebt = debts.fold<double>(0, (sum, d) => sum + d.amount);
+
+                final totalDebt = debts.fold<double>(
+                  0,
+                  (sum, d) => sum + d.amount,
+                );
                 final fmt = NumberFormat('#,##0.00');
-                
+
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -83,14 +88,20 @@ class PersonalPage extends ConsumerWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                getDisplayName(d.userId, currentUserId, userNames),
+                                getDisplayName(
+                                  d.userId,
+                                  currentUserId,
+                                  userNames,
+                                ),
                                 style: theme.textTheme.bodyMedium,
                               ),
                               Text(
                                 'SGD ${fmt.format(d.amount)}',
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   fontWeight: FontWeight.w600,
-                                  fontFeatures: const [FontFeature.tabularFigures()],
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
                                 ),
                               ),
                             ],
@@ -119,39 +130,58 @@ class PersonalPage extends ConsumerWidget {
           const SizedBox(height: AppUi.compactGap),
           Builder(
             builder: (_) {
+              late final Widget content;
               if (txState.isLoading) {
-                return const TransactionListSkeleton();
-              }
-              if (txState.error != null) {
-                return ErrorState(
+                content = const TransactionListSkeleton();
+              } else if (txState.error != null) {
+                content = ErrorState(
                   message: txState.error ?? 'Failed to load transactions',
                 );
-              }
-              if (txState.transactions.isEmpty) {
-                return const TransactionEmptyState();
+              } else if (txState.transactions.isEmpty) {
+                content = const TransactionEmptyState();
+              } else {
+                // Transactions are already filtered by the provider (backend query)
+                content = AppCardSurface(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: List.generate(txState.transactions.length, (i) {
+                      final tx = txState.transactions[i];
+                      return TransactionTile(
+                        tx: tx,
+                        userName: getDisplayName(
+                          tx.userId,
+                          currentUserId,
+                          userNames,
+                        ),
+                        showDivider: i < txState.transactions.length - 1,
+                        onEdit: () => _editPersonalTransaction(context, tx),
+                        onDelete: () =>
+                            _confirmDeletePersonalTransaction(context, ref, tx),
+                      );
+                    }),
+                  ),
+                );
               }
 
-              // Transactions are already filtered by the provider (backend query)
-              return AppCardSurface(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  children: List.generate(txState.transactions.length, (i) {
-                    final tx = txState.transactions[i];
-                    return TransactionTile(
-                      tx: tx,
-                      userName: getDisplayName(
-                        tx.userId,
-                        currentUserId,
-                        userNames,
-                      ),
-                      showDivider: i < txState.transactions.length - 1,
-                      onEdit: () => _editPersonalTransaction(context, tx),
-                      onDelete: () => _confirmDeletePersonalTransaction(context, ref, tx),
-                    );
-                  }),
+              return AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                child: KeyedSubtree(
+                  key: ValueKey(
+                    '${txState.isLoading}-${txState.error}-${txState.transactions.length}',
+                  ),
+                  child: content,
                 ),
               );
             },
+          ),
+          const SizedBox(height: AppUi.compactGap),
+          Text(
+            'Swipe right to edit, left to delete.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.textTheme.labelMedium?.color,
+            ),
           ),
         ],
       ),
@@ -183,15 +213,24 @@ class PersonalPage extends ConsumerWidget {
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16)),
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: const Text('Confirm delete'),
-          content: const Text('Delete this transaction? This cannot be undone.'),
+          content: const Text(
+            'Delete this transaction? This cannot be undone.',
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete',
-                  style: TextStyle(color: AppTheme.negative))),
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: AppTheme.negative),
+              ),
+            ),
           ],
         );
       },
@@ -200,7 +239,9 @@ class PersonalPage extends ConsumerWidget {
     if (confirmed != true || !context.mounted) return;
 
     try {
-      await ref.read(transactionServiceProvider).deletePersonalTransaction(tx.id);
+      await ref
+          .read(transactionServiceProvider)
+          .deletePersonalTransaction(tx.id);
       if (!context.mounted) return;
       AppFeedback.showSuccess(context, 'Personal transaction deleted');
     } catch (e) {

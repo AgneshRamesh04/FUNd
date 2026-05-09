@@ -5,8 +5,9 @@ import '../../home/data/home_providers.dart';
 import 'shared_expenses_models.dart';
 import 'shared_expenses_repository.dart';
 
-final sharedExpensesRepositoryProvider =
-    Provider<SharedExpensesRepository>((ref) {
+final sharedExpensesRepositoryProvider = Provider<SharedExpensesRepository>((
+  ref,
+) {
   return SharedExpensesRepository(ref.watch(supabaseClientProvider));
 });
 
@@ -14,15 +15,17 @@ final sharedExpensesRepositoryProvider =
 
 final poolMonthExpenseProvider =
     FutureProvider.family<Map<String, double>, DateTime>((ref, month) async {
-  return ref
-      .watch(sharedExpensesRepositoryProvider)
-      .fetchPoolMonthExpense(month);
-});
+      return ref
+          .watch(sharedExpensesRepositoryProvider)
+          .fetchPoolMonthExpense(month);
+    });
 
 // ── Pool summary total expense ────────────────────────────────────────────────
 
-final poolSummaryTotalProvider =
-    FutureProvider.family<double, DateTime>((ref, month) async {
+final poolSummaryTotalProvider = FutureProvider.family<double, DateTime>((
+  ref,
+  month,
+) async {
   return ref
       .watch(sharedExpensesRepositoryProvider)
       .fetchPoolSummaryTotal(month);
@@ -31,17 +34,13 @@ final poolSummaryTotalProvider =
 // ── Active trip ───────────────────────────────────────────────────────────────
 
 final activeTripProvider = FutureProvider<TripSummary?>((ref) async {
-  return ref
-      .watch(sharedExpensesRepositoryProvider)
-      .fetchActiveTripSummary();
+  return ref.watch(sharedExpensesRepositoryProvider).fetchActiveTripSummary();
 });
 
 // ── All trips ─────────────────────────────────────────────────────────────────
 
 final allTripsProvider = FutureProvider<List<TripSummary>>((ref) async {
-  return ref
-      .watch(sharedExpensesRepositoryProvider)
-      .fetchAllTrips();
+  return ref.watch(sharedExpensesRepositoryProvider).fetchAllTrips();
 });
 
 // ── Paginated shared transactions ─────────────────────────────────────────────
@@ -82,7 +81,7 @@ class SharedTransactionsState {
 class SharedTransactionsNotifier
     extends StateNotifier<SharedTransactionsState> {
   SharedTransactionsNotifier(this._repo, this._monthKey)
-      : super(const SharedTransactionsState()) {
+    : super(const SharedTransactionsState()) {
     _loadFirst();
   }
 
@@ -135,30 +134,33 @@ class SharedTransactionsNotifier
 }
 
 /// Family provider keyed by month (YYYY-MM format) for caching per month
-final sharedTransactionsProvider = StateNotifierProvider.family<
-    SharedTransactionsNotifier, SharedTransactionsState, String>((ref, monthKey) {
-  return SharedTransactionsNotifier(
-    ref.watch(sharedExpensesRepositoryProvider),
-    monthKey,
-  );
-});
+final sharedTransactionsProvider =
+    StateNotifierProvider.family<
+      SharedTransactionsNotifier,
+      SharedTransactionsState,
+      String
+    >((ref, monthKey) {
+      return SharedTransactionsNotifier(
+        ref.watch(sharedExpensesRepositoryProvider),
+        monthKey,
+      );
+    });
 
 // ── User names ────────────────────────────────────────────────────────────────
 
-final sharedUserNamesProvider =
-    FutureProvider<Map<String, String>>((ref) async {
-  return ref
-      .watch(sharedExpensesRepositoryProvider)
-      .fetchUserNames();
+final sharedUserNamesProvider = FutureProvider<Map<String, String>>((
+  ref,
+) async {
+  return ref.watch(sharedExpensesRepositoryProvider).fetchUserNames();
 });
 
 // ── Trip expenses ─────────────────────────────────────────────────────────────
 
 /// Family provider keyed by tripId for fetching all expenses for a specific trip.
 /// Real-time updates are handled by RealtimeService invalidations.
-final tripExpensesProvider =
-    FutureProvider.family<List<TripExpense>, String>((ref, tripId) async {
-  return ref
-      .watch(sharedExpensesRepositoryProvider)
-      .fetchTripExpenses(tripId);
+final tripExpensesProvider = FutureProvider.family<List<TripExpense>, String>((
+  ref,
+  tripId,
+) async {
+  return ref.watch(sharedExpensesRepositoryProvider).fetchTripExpenses(tripId);
 });

@@ -20,7 +20,8 @@ class PersonalRepository {
       final data = await supabase
           .from('transactions')
           .select(
-              'id, type, user_id, amount, description, date, notes, month_key')
+            'id, type, user_id, amount, description, date, notes, month_key',
+          )
           .inFilter('type', ['borrow', 'monthly_obligation', 'deposit'])
           .eq('month_key', monthKey)
           .order('date', ascending: false)
@@ -37,7 +38,7 @@ class PersonalRepository {
       final data = await supabase.from('users').select('id, name');
       return {
         for (final u in data as List)
-          u['id'] as String: (u['name'] as String?) ?? 'Unknown'
+          u['id'] as String: (u['name'] as String?) ?? 'Unknown',
       };
     } catch (e, st) {
       throw AppException.fromError(e, st);
@@ -65,11 +66,13 @@ class PersonalRepository {
       if (!ValidationUtils.isValidDescription(description)) {
         throw AppException.validation('Description cannot be empty');
       }
-      
+
       // Sanitize inputs
       final sanitizedDescription = ValidationUtils.sanitizeInput(description);
-      final sanitizedNotes = notes != null ? ValidationUtils.sanitizeInput(notes) : null;
-      
+      final sanitizedNotes = notes != null
+          ? ValidationUtils.sanitizeInput(notes)
+          : null;
+
       await supabase.from('transactions').insert({
         'type': 'borrow',
         'user_id': userId,
@@ -107,17 +110,22 @@ class PersonalRepository {
       }
 
       final sanitizedDescription = ValidationUtils.sanitizeInput(description);
-      final sanitizedNotes = notes != null ? ValidationUtils.sanitizeInput(notes) : null;
+      final sanitizedNotes = notes != null
+          ? ValidationUtils.sanitizeInput(notes)
+          : null;
 
-      await supabase.from('transactions').update({
-        'type': type,
-        'user_id': userId,
-        'amount': amount,
-        'description': sanitizedDescription,
-        'date': DateUtils.toDateString(date),
-        'month_key': monthKey,
-        'notes': sanitizedNotes,
-      }).eq('id', id);
+      await supabase
+          .from('transactions')
+          .update({
+            'type': type,
+            'user_id': userId,
+            'amount': amount,
+            'description': sanitizedDescription,
+            'date': DateUtils.toDateString(date),
+            'month_key': monthKey,
+            'notes': sanitizedNotes,
+          })
+          .eq('id', id);
     } catch (e, st) {
       if (e is AppException) rethrow;
       throw AppException.fromError(e, st);

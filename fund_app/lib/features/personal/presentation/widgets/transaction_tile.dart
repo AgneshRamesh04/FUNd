@@ -119,10 +119,13 @@ class TransactionTile extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          if ((tx.description ?? '').isNotEmpty || (tx.notes ?? '').isNotEmpty) ...[
+                          if ((tx.description ?? '').isNotEmpty ||
+                              (tx.notes ?? '').isNotEmpty) ...[
                             const SizedBox(height: 4),
                             Text(
-                              (tx.description?.isNotEmpty == true) ? tx.description! : tx.notes!,
+                              (tx.description?.isNotEmpty == true)
+                                  ? tx.description!
+                                  : tx.notes!,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.hintColor.withValues(alpha: 0.7),
                                 fontStyle: FontStyle.italic,

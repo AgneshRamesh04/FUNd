@@ -52,10 +52,7 @@ class _LeavePageState extends ConsumerState<LeavePage>
         automaticallyImplyLeading: false,
         titleSpacing: 0,
         title: Row(
-          children: [
-            const SizedBox(width: 12),
-            _buildYearSelector(context),
-          ],
+          children: [const SizedBox(width: 12), _buildYearSelector(context)],
         ),
         actions: [
           IconButton(
@@ -78,13 +75,20 @@ class _LeavePageState extends ConsumerState<LeavePage>
             return Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppUi.pageHorizontalPadding,
+                    8,
+                    AppUi.pageHorizontalPadding,
+                    4,
+                  ),
                   child: _buildProfessionalTabs(context, currentUserAsync),
                 ),
                 Expanded(
                   child: TabBarView(
                     controller: _tabController,
-                    children: _users.map((u) => _buildUserTab(context, u)).toList(),
+                    children: _users
+                        .map((u) => _buildUserTab(context, u))
+                        .toList(),
                   ),
                 ),
               ],
@@ -109,8 +113,12 @@ class _LeavePageState extends ConsumerState<LeavePage>
                   ),
                 )
                 .then((_) {
-                  ref.invalidate(leaveTrackingProvider((activeUser.id, _selectedYear)));
-                  ref.invalidate(leaveEntriesByYearProvider((activeUser.id, _selectedYear)));
+                  ref.invalidate(
+                    leaveTrackingProvider((activeUser.id, _selectedYear)),
+                  );
+                  ref.invalidate(
+                    leaveEntriesByYearProvider((activeUser.id, _selectedYear)),
+                  );
                 }),
             icon: const Icon(Icons.add_rounded),
             label: const Text('Add Leave'),
@@ -183,7 +191,8 @@ class _LeavePageState extends ConsumerState<LeavePage>
                       child: const Text('Cancel'),
                     ),
                     FilledButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(tempYear),
+                      onPressed: () =>
+                          Navigator.of(dialogContext).pop(tempYear),
                       child: const Text('Apply'),
                     ),
                   ],
@@ -206,14 +215,14 @@ class _LeavePageState extends ConsumerState<LeavePage>
     );
   }
 
-  Widget _buildProfessionalTabs(BuildContext context, AsyncValue currentUserAsync) {
+  Widget _buildProfessionalTabs(
+    BuildContext context,
+    AsyncValue currentUserAsync,
+  ) {
     final labels = _users.map((u) {
       return currentUserAsync.maybeWhen(
-        data: (currentUser) => getDisplayName(
-          u.id,
-          currentUser.id,
-          {u.id: u.name},
-        ),
+        data: (currentUser) =>
+            getDisplayName(u.id, currentUser.id, {u.id: u.name}),
         orElse: () => u.name,
       );
     }).toList();
@@ -222,7 +231,9 @@ class _LeavePageState extends ConsumerState<LeavePage>
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.6)),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
+        ),
       ),
       padding: const EdgeInsets.all(6),
       child: TabBar(
@@ -242,9 +253,12 @@ class _LeavePageState extends ConsumerState<LeavePage>
         ),
         labelColor: Colors.white,
         unselectedLabelColor: Theme.of(context).textTheme.bodyMedium?.color,
-        labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
-        unselectedLabelStyle:
-            Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
+        labelStyle: Theme.of(
+          context,
+        ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+        unselectedLabelStyle: Theme.of(
+          context,
+        ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
         tabs: labels.map((name) => Tab(text: name)).toList(),
       ),
     );
@@ -260,7 +274,7 @@ class _LeavePageState extends ConsumerState<LeavePage>
     final tripsAsync = ref.watch(allTripsProvider);
     final tripNameById = {
       for (final trip in (tripsAsync.value ?? const []))
-        if (trip.tripId != null) trip.tripId!: (trip.tripName ?? 'Trip')
+        if (trip.tripId != null) trip.tripId!: (trip.tripName ?? 'Trip'),
     };
 
     return RefreshIndicator(
@@ -271,7 +285,12 @@ class _LeavePageState extends ConsumerState<LeavePage>
         ref.invalidate(leaveTrackingProvider((user.id, _selectedYear)));
       },
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+        padding: const EdgeInsets.fromLTRB(
+          AppUi.pageHorizontalPadding,
+          14,
+          AppUi.pageHorizontalPadding,
+          24,
+        ),
         children: [
           leaveTrackingAsync.maybeWhen(
             data: (tracking) => tracking == null
@@ -293,7 +312,9 @@ class _LeavePageState extends ConsumerState<LeavePage>
                   ),
                 )
                 .then((_) {
-                  ref.invalidate(leaveTrackingProvider((user.id, _selectedYear)));
+                  ref.invalidate(
+                    leaveTrackingProvider((user.id, _selectedYear)),
+                  );
                 }),
             icon: const Icon(Icons.settings_rounded),
             label: const Text('Leave Settings'),
@@ -309,9 +330,9 @@ class _LeavePageState extends ConsumerState<LeavePage>
           const SizedBox(height: 22),
           Text(
             'Entries',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 10),
           if (leaveEntriesState.isLoading)
@@ -333,8 +354,8 @@ class _LeavePageState extends ConsumerState<LeavePage>
                     Text(
                       'No leave entries for $_selectedYear',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).textTheme.labelMedium?.color,
-                          ),
+                        color: Theme.of(context).textTheme.labelMedium?.color,
+                      ),
                     ),
                   ],
                 ),
@@ -356,7 +377,10 @@ class _LeavePageState extends ConsumerState<LeavePage>
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.delete_outline_rounded, color: Colors.white),
+                          Icon(
+                            Icons.delete_outline_rounded,
+                            color: Colors.white,
+                          ),
                           SizedBox(width: 8),
                           Text(
                             'Delete',
@@ -389,10 +413,10 @@ class _LeavePageState extends ConsumerState<LeavePage>
             child: Text(
               'Swipe left on an entry to delete',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).textTheme.labelMedium?.color,
-                    letterSpacing: 0.4,
-                    fontStyle: FontStyle.italic,
-                  ),
+                color: Theme.of(context).textTheme.labelMedium?.color,
+                letterSpacing: 0.4,
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ),
         ],
@@ -453,7 +477,9 @@ class _LeavePageState extends ConsumerState<LeavePage>
                 '${tracking.remaining} left',
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: tracking.remaining > 0 ? AppTheme.accent : AppTheme.negative,
+                  color: tracking.remaining > 0
+                      ? AppTheme.accent
+                      : AppTheme.negative,
                 ),
               ),
             ],
@@ -474,7 +500,12 @@ class _LeavePageState extends ConsumerState<LeavePage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatItem(context, 'Used', '${tracking.used}', AppTheme.warning),
+              _buildStatItem(
+                context,
+                'Used',
+                '${tracking.used}',
+                AppTheme.warning,
+              ),
               _buildStatItem(
                 context,
                 'Total',
@@ -488,7 +519,12 @@ class _LeavePageState extends ConsumerState<LeavePage>
     );
   }
 
-  Widget _buildStatItem(BuildContext context, String label, String value, Color color) {
+  Widget _buildStatItem(
+    BuildContext context,
+    String label,
+    String value,
+    Color color,
+  ) {
     final theme = Theme.of(context);
     return Column(
       children: [
@@ -517,8 +553,9 @@ class _LeavePageState extends ConsumerState<LeavePage>
     bool showDivider = true,
   }) {
     final theme = Theme.of(context);
-    final tripIcon =
-        entry.tripId != null ? Icons.luggage_rounded : Icons.calendar_today_rounded;
+    final tripIcon = entry.tripId != null
+        ? Icons.luggage_rounded
+        : Icons.calendar_today_rounded;
 
     return Column(
       children: [
@@ -610,10 +647,7 @@ class _ShimmerCard extends StatelessWidget {
             SizedBox(height: 18),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _SkeletonStat(),
-                _SkeletonStat(),
-              ],
+              children: [_SkeletonStat(), _SkeletonStat()],
             ),
           ],
         ),
@@ -707,19 +741,13 @@ class _SkeletonCircle extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }
 
 class _SkeletonLine extends StatelessWidget {
-  const _SkeletonLine({
-    required this.width,
-    required this.height,
-  });
+  const _SkeletonLine({required this.width, required this.height});
 
   final double width;
   final double height;

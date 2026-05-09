@@ -16,11 +16,7 @@ import '../../data/shared_expenses_models.dart';
         icon: Icons.receipt_long_rounded,
         color: AppTheme.negative,
       ),
-      _ => (
-        label: type,
-        icon: Icons.payment_rounded,
-        color: Colors.grey,
-      ),
+      _ => (label: type, icon: Icons.payment_rounded, color: Colors.grey),
     };
 
 class TripExpenseTile extends StatelessWidget {
@@ -57,7 +53,14 @@ class TripExpenseTile extends StatelessWidget {
           children: [
             Icon(Icons.edit_rounded, color: Colors.white),
             SizedBox(height: 4),
-            Text('Edit', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+            Text(
+              'Edit',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       ),
@@ -71,7 +74,14 @@ class TripExpenseTile extends StatelessWidget {
           children: [
             Icon(Icons.delete_forever_rounded, color: Colors.white),
             SizedBox(height: 4),
-            Text('Delete', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+            Text(
+              'Delete',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       ),
@@ -87,9 +97,7 @@ class TripExpenseTile extends StatelessWidget {
       child: InkWell(
         onTap: onEdit,
         child: Container(
-          decoration: BoxDecoration(
-            color: theme.cardColor,
-          ),
+          decoration: BoxDecoration(color: theme.cardColor),
           child: Column(
             children: [
               Padding(

@@ -24,8 +24,9 @@ void showSettings(BuildContext context, WidgetRef ref) {
           children: [
             Text(
               'Settings',
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 20),
             Text('THEME', style: theme.textTheme.labelMedium),
@@ -45,9 +46,7 @@ void showSettings(BuildContext context, WidgetRef ref) {
                       Navigator.pop(context);
                     },
                   ),
-                  Divider(
-                      height: 1,
-                      color: theme.dividerTheme.color),
+                  Divider(height: 1, color: theme.dividerTheme.color),
                   _ThemeOptionTile(
                     label: 'Light',
                     icon: Icons.light_mode_rounded,
@@ -59,17 +58,13 @@ void showSettings(BuildContext context, WidgetRef ref) {
                       Navigator.pop(context);
                     },
                   ),
-                  Divider(
-                      height: 1,
-                      color: theme.dividerTheme.color),
+                  Divider(height: 1, color: theme.dividerTheme.color),
                   _ThemeOptionTile(
                     label: 'Dark',
                     icon: Icons.dark_mode_rounded,
                     isSelected: currentThemeMode == ThemeMode.dark,
                     onTap: () {
-                      ref
-                          .read(themeProvider.notifier)
-                          .setTheme(ThemeMode.dark);
+                      ref.read(themeProvider.notifier).setTheme(ThemeMode.dark);
                       Navigator.pop(context);
                     },
                   ),
@@ -80,21 +75,27 @@ void showSettings(BuildContext context, WidgetRef ref) {
             const Divider(),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.logout_rounded,
-                  size: 20, color: theme.colorScheme.error),
+              leading: Icon(
+                Icons.logout_rounded,
+                size: 20,
+                color: theme.colorScheme.error,
+              ),
               title: Text(
                 'Logout',
                 style: TextStyle(color: theme.colorScheme.error),
               ),
               onTap: () async {
-                final confirmed = await showDialog<bool>(
+                final confirmed =
+                    await showDialog<bool>(
                       context: context,
                       builder: (context) => AlertDialog(
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                         title: const Text('Logout?'),
-                        content:
-                            const Text('Are you sure you want to log out?'),
+                        content: const Text(
+                          'Are you sure you want to log out?',
+                        ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context, false),
@@ -102,8 +103,10 @@ void showSettings(BuildContext context, WidgetRef ref) {
                           ),
                           TextButton(
                             onPressed: () => Navigator.pop(context, true),
-                            child: Text('Logout',
-                                style: TextStyle(color: AppTheme.negative)),
+                            child: Text(
+                              'Logout',
+                              style: TextStyle(color: AppTheme.negative),
+                            ),
                           ),
                         ],
                       ),

@@ -63,7 +63,8 @@ class SharedExpensesRepository {
       final data = await supabase
           .from('trip_summary')
           .select(
-              'trip_id, trip_name, start_date, end_date, duration_days, total_expense')
+            'trip_id, trip_name, start_date, end_date, duration_days, total_expense',
+          )
           .order('start_date', ascending: false)
           .limit(20);
 
@@ -76,18 +77,21 @@ class SharedExpensesRepository {
 
       // 1. Ongoing
       final ongoing = trips
-          .where((t) =>
-              t.startDate != null &&
-              !t.startDate!.isAfter(today) &&
-              (t.endDate == null || !t.endDate!.isBefore(today)))
+          .where(
+            (t) =>
+                t.startDate != null &&
+                !t.startDate!.isAfter(today) &&
+                (t.endDate == null || !t.endDate!.isBefore(today)),
+          )
           .firstOrNull;
       if (ongoing != null) return ongoing;
 
       // 2. Nearest upcoming
-      final upcoming = trips
-          .where((t) => t.startDate != null && t.startDate!.isAfter(today))
-          .toList()
-        ..sort((a, b) => a.startDate!.compareTo(b.startDate!));
+      final upcoming =
+          trips
+              .where((t) => t.startDate != null && t.startDate!.isAfter(today))
+              .toList()
+            ..sort((a, b) => a.startDate!.compareTo(b.startDate!));
       if (upcoming.isNotEmpty) return upcoming.first;
 
       // 3. Most recent past
@@ -106,7 +110,8 @@ class SharedExpensesRepository {
       final data = await supabase
           .from('transactions')
           .select(
-              'id, type, user_id, amount, description, date, notes, month_key')
+            'id, type, user_id, amount, description, date, notes, month_key',
+          )
           .inFilter('type', ['user_paid_for_pool', 'pool_expense'])
           .eq('month_key', monthKey)
           .filter('trip_id', 'is', 'null')
@@ -126,7 +131,8 @@ class SharedExpensesRepository {
       final data = await supabase
           .from('trip_summary')
           .select(
-              'trip_id, trip_name, start_date, end_date, duration_days, total_expense')
+            'trip_id, trip_name, start_date, end_date, duration_days, total_expense',
+          )
           .order('start_date', ascending: false);
 
       return (data as List)
@@ -142,7 +148,7 @@ class SharedExpensesRepository {
       final data = await supabase.from('users').select('id, name');
       return {
         for (final u in data as List)
-          u['id'] as String: (u['name'] as String?) ?? 'Unknown'
+          u['id'] as String: (u['name'] as String?) ?? 'Unknown',
       };
     } catch (e, st) {
       throw AppException.fromError(e, st);
@@ -171,21 +177,25 @@ class SharedExpensesRepository {
       if (!ValidationUtils.isValidDescription(description)) {
         throw AppException.validation('Description cannot be empty');
       }
-      
+
       // Sanitize inputs
       final sanitizedDescription = ValidationUtils.sanitizeInput(description);
-      final sanitizedNotes = notes != null ? ValidationUtils.sanitizeInput(notes) : null;
-      
+      final sanitizedNotes = notes != null
+          ? ValidationUtils.sanitizeInput(notes)
+          : null;
+
       late final String transactionType;
-      
+
       if (type == 'deposit') {
         transactionType = 'deposit';
       } else if (type == 'shared') {
-        transactionType = userId == null ? 'pool_expense' : 'user_paid_for_pool';
+        transactionType = userId == null
+            ? 'pool_expense'
+            : 'user_paid_for_pool';
       } else {
         throw ArgumentError('Invalid type: $type');
       }
-      
+
       await supabase.from('transactions').insert({
         'type': transactionType,
         'user_id': userId,
@@ -222,17 +232,22 @@ class SharedExpensesRepository {
       }
 
       final sanitizedDescription = ValidationUtils.sanitizeInput(description);
-      final sanitizedNotes = notes != null ? ValidationUtils.sanitizeInput(notes) : null;
+      final sanitizedNotes = notes != null
+          ? ValidationUtils.sanitizeInput(notes)
+          : null;
 
-      await supabase.from('transactions').update({
-        'type': type,
-        'user_id': userId,
-        'amount': amount,
-        'description': sanitizedDescription,
-        'date': DateUtils.toDateString(date),
-        'month_key': monthKey,
-        'notes': sanitizedNotes,
-      }).eq('id', id);
+      await supabase
+          .from('transactions')
+          .update({
+            'type': type,
+            'user_id': userId,
+            'amount': amount,
+            'description': sanitizedDescription,
+            'date': DateUtils.toDateString(date),
+            'month_key': monthKey,
+            'notes': sanitizedNotes,
+          })
+          .eq('id', id);
     } catch (e, st) {
       throw AppException.fromError(e, st);
     }
@@ -268,13 +283,17 @@ class SharedExpensesRepository {
       if (!ValidationUtils.isValidDescription(description)) {
         throw AppException.validation('Description cannot be empty');
       }
-      
+
       // Sanitize inputs
       final sanitizedDescription = ValidationUtils.sanitizeInput(description);
-      final sanitizedNotes = notes != null ? ValidationUtils.sanitizeInput(notes) : null;
-      
-      final transactionType = userId == null ? 'pool_expense' : 'user_paid_for_pool';
-      
+      final sanitizedNotes = notes != null
+          ? ValidationUtils.sanitizeInput(notes)
+          : null;
+
+      final transactionType = userId == null
+          ? 'pool_expense'
+          : 'user_paid_for_pool';
+
       await supabase.from('transactions').insert({
         'type': transactionType,
         'user_id': userId,
@@ -301,10 +320,10 @@ class SharedExpensesRepository {
       if (!ValidationUtils.isValidDescription(tripName)) {
         throw AppException.validation('Trip name cannot be empty');
       }
-      
+
       // Sanitize trip name
       final sanitizedTripName = ValidationUtils.sanitizeInput(tripName);
-      
+
       await supabase.from('trips').insert({
         'trip_name': sanitizedTripName,
         'start_date': DateUtils.toDateString(startDate),
@@ -321,7 +340,8 @@ class SharedExpensesRepository {
       final data = await supabase
           .from('transactions')
           .select(
-              'id, trip_id, type, user_id, amount, description, date, notes')
+            'id, trip_id, type, user_id, amount, description, date, notes',
+          )
           .eq('trip_id', tripId)
           .inFilter('type', ['user_paid_for_pool', 'pool_expense'])
           .order('date', ascending: false);
@@ -356,11 +376,13 @@ class SharedExpensesRepository {
 
       // Sanitize inputs
       final sanitizedDescription = ValidationUtils.sanitizeInput(description);
-      final sanitizedNotes =
-          notes != null ? ValidationUtils.sanitizeInput(notes) : null;
+      final sanitizedNotes = notes != null
+          ? ValidationUtils.sanitizeInput(notes)
+          : null;
 
-      final transactionType =
-          userId == null ? 'pool_expense' : 'user_paid_for_pool';
+      final transactionType = userId == null
+          ? 'pool_expense'
+          : 'user_paid_for_pool';
 
       await supabase.from('transactions').insert({
         'trip_id': tripId,
@@ -398,17 +420,21 @@ class SharedExpensesRepository {
       }
 
       final sanitizedDescription = ValidationUtils.sanitizeInput(description);
-      final sanitizedNotes =
-          notes != null ? ValidationUtils.sanitizeInput(notes) : null;
+      final sanitizedNotes = notes != null
+          ? ValidationUtils.sanitizeInput(notes)
+          : null;
 
-      await supabase.from('transactions').update({
-        'type': type,
-        'user_id': userId,
-        'amount': amount,
-        'description': sanitizedDescription,
-        'date': DateUtils.toDateString(date),
-        'notes': sanitizedNotes,
-      }).eq('id', id);
+      await supabase
+          .from('transactions')
+          .update({
+            'type': type,
+            'user_id': userId,
+            'amount': amount,
+            'description': sanitizedDescription,
+            'date': DateUtils.toDateString(date),
+            'notes': sanitizedNotes,
+          })
+          .eq('id', id);
     } catch (e, st) {
       throw AppException.fromError(e, st);
     }

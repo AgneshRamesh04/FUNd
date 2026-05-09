@@ -21,14 +21,16 @@ final userDebtsProvider = FutureProvider<List<UserDebt>>((ref) async {
 });
 
 /// Keyed by year — re-fetches automatically when the selected year changes.
-final userLeavesProvider =
-    FutureProvider.family<List<UserLeave>, int>((ref, year) async {
+final userLeavesProvider = FutureProvider.family<List<UserLeave>, int>((
+  ref,
+  year,
+) async {
   final repo = ref.watch(homeRepositoryProvider);
   return repo.fetchUserLeaves(year);
 });
 
 final inflowOutflowProvider =
     FutureProvider.family<Map<String, double>, DateTime>((ref, month) async {
-  final repo = ref.watch(homeRepositoryProvider);
-  return repo.fetchMonthlyInflowOutflow(month);
-});
+      final repo = ref.watch(homeRepositoryProvider);
+      return repo.fetchMonthlyInflowOutflow(month);
+    });

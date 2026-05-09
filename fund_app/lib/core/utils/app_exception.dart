@@ -24,7 +24,8 @@ class AppException implements Exception {
       'auth_error' => 'Authentication failed. Please log in again.',
       'validation_error' => message, // Already user-friendly
       'not_found_error' => 'The requested item was not found.',
-      'permission_error' => 'You do not have permission to perform this action.',
+      'permission_error' =>
+        'You do not have permission to perform this action.',
       'conflict_error' => 'This operation conflicts with existing data.',
       _ => message,
     };
@@ -41,28 +42,22 @@ class AppException implements Exception {
     if (errorStr.contains('PgSQLException')) {
       message = 'Database error. Please try again.';
       code = 'db_error';
-    } 
-    else if (errorStr.contains('SocketException')) {
+    } else if (errorStr.contains('SocketException')) {
       message = 'Network error. Check your connection.';
       code = 'network_error';
-    } 
-    else if (errorStr.contains('TimeoutException')) {
+    } else if (errorStr.contains('TimeoutException')) {
       message = 'Request timed out. Please try again.';
       code = 'timeout_error';
-    } 
-    else if (errorStr.contains('AuthException')) {
+    } else if (errorStr.contains('AuthException')) {
       message = 'Authentication failed. Please log in again.';
       code = 'auth_error';
-    }
-    else if (errorStr.contains('not found') || errorStr.contains('404')) {
+    } else if (errorStr.contains('not found') || errorStr.contains('404')) {
       message = 'The requested item was not found.';
       code = 'not_found_error';
-    }
-    else if (errorStr.contains('permission') || errorStr.contains('403')) {
+    } else if (errorStr.contains('permission') || errorStr.contains('403')) {
       message = 'You do not have permission to perform this action.';
       code = 'permission_error';
-    }
-    else if (errorStr.contains('conflict') || errorStr.contains('409')) {
+    } else if (errorStr.contains('conflict') || errorStr.contains('409')) {
       message = 'This operation conflicts with existing data.';
       code = 'conflict_error';
     }
@@ -77,25 +72,16 @@ class AppException implements Exception {
 
   /// Creates a validation error
   factory AppException.validation(String message) {
-    return AppException(
-      message: message,
-      code: 'validation_error',
-    );
+    return AppException(message: message, code: 'validation_error');
   }
 
   /// Creates a not found error
   factory AppException.notFound(String message) {
-    return AppException(
-      message: message,
-      code: 'not_found_error',
-    );
+    return AppException(message: message, code: 'not_found_error');
   }
 
   /// Creates a permission error
   factory AppException.permission(String message) {
-    return AppException(
-      message: message,
-      code: 'permission_error',
-    );
+    return AppException(message: message, code: 'permission_error');
   }
 }

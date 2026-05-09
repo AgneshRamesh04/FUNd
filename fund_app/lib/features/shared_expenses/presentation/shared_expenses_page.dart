@@ -30,7 +30,9 @@ class SharedExpensesPage extends ConsumerWidget {
     final tripAsync = ref.watch(activeTripProvider);
     final allTripsAsync = ref.watch(allTripsProvider);
     // Generate month key in YYYY-MM format
-    final monthKey = app_date.DateUtils.toMonthKey(selectedMonth).substring(0, 7);
+    final monthKey = app_date.DateUtils.toMonthKey(
+      selectedMonth,
+    ).substring(0, 7);
     final txState = ref.watch(sharedTransactionsProvider(monthKey));
     final userNames = ref.watch(sharedUserNamesProvider).value ?? {};
     final currentUserAsync = ref.watch(currentUserProvider);
@@ -46,20 +48,18 @@ class SharedExpensesPage extends ConsumerWidget {
         children: [
           // ── Section 1: Total shared expense for the month ─────────────────
           const AppSectionTitle('SHARED THIS MONTH'),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppUi.compactGap),
           poolSummaryAsync.when(
-            data: (total) => _PoolSummaryCard(
-              month: selectedMonth,
-              totalExpense: total,
-            ),
-            loading: () => const LinearProgressIndicator(),
+            data: (total) =>
+                _PoolSummaryCard(month: selectedMonth, totalExpense: total),
+            loading: () => const CardSkeleton(),
             error: (e, _) => ErrorState(message: '$e'),
           ),
           const SizedBox(height: AppUi.sectionGap),
 
           // ── Section 2: Active trip ─────────────────────────────────────
           const AppSectionTitle('ACTIVE TRIP'),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppUi.compactGap),
           tripAsync.when(
             data: (trip) => trip != null
                 ? Column(
@@ -84,8 +84,9 @@ class SharedExpensesPage extends ConsumerWidget {
                               onPressed: () =>
                                   _showAllTripsModal(context, trips, theme),
                               style: TextButton.styleFrom(
-                                backgroundColor:
-                                    AppTheme.accent.withValues(alpha: 0.1),
+                                backgroundColor: AppTheme.accent.withValues(
+                                  alpha: 0.1,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -119,8 +120,9 @@ class SharedExpensesPage extends ConsumerWidget {
                               onPressed: () =>
                                   _showAllTripsModal(context, trips, theme),
                               style: TextButton.styleFrom(
-                                backgroundColor:
-                                    AppTheme.accent.withValues(alpha: 0.1),
+                                backgroundColor: AppTheme.accent.withValues(
+                                  alpha: 0.1,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -140,7 +142,7 @@ class SharedExpensesPage extends ConsumerWidget {
                       ),
                     ],
                   ),
-            loading: () => const LinearProgressIndicator(),
+            loading: () => const CardSkeleton(),
             error: (e, _) => ErrorState(message: '$e'),
           ),
           const SizedBox(height: AppUi.sectionGap),
@@ -148,40 +150,61 @@ class SharedExpensesPage extends ConsumerWidget {
           // ── Section 3: Shared transactions (no trip) ──────────────────
           const AppSectionTitle('SHARED EXPENSES'),
           const SizedBox(height: AppUi.compactGap),
-          Builder(builder: (_) {
-            if (txState.isLoading) {
-              return const TransactionListSkeleton();
-            }
-            if (txState.error != null) {
-              return ErrorState(
-                message: txState.error ?? 'Failed to load transactions',
-              );
-            }
-            if (txState.transactions.isEmpty) {
-              return const TransactionEmptyState();
-            }
+          Builder(
+            builder: (_) {
+              late final Widget content;
+              if (txState.isLoading) {
+                content = const TransactionListSkeleton();
+              } else if (txState.error != null) {
+                content = ErrorState(
+                  message: txState.error ?? 'Failed to load transactions',
+                );
+              } else if (txState.transactions.isEmpty) {
+                content = const TransactionEmptyState(onAddTransaction: null);
+              } else {
+                // Transactions are already filtered by the provider (backend query)
+                content = AppCardSurface(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: List.generate(txState.transactions.length, (i) {
+                      final tx = txState.transactions[i];
+                      return SharedTransactionTile(
+                        tx: tx,
+                        userName: getDisplayName(
+                          tx.userId ?? '',
+                          currentUserId,
+                          userNames,
+                        ),
+                        showDivider: i < txState.transactions.length - 1,
+                        onEdit: () => _editSharedTransaction(context, tx),
+                        onDelete: () =>
+                            _confirmDeleteSharedTransaction(context, ref, tx),
+                      );
+                    }),
+                  ),
+                );
+              }
 
-            // Transactions are already filtered by the provider (backend query)
-            return AppCardSurface(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: List.generate(txState.transactions.length, (i) {
-                    final tx = txState.transactions[i];
-                    return SharedTransactionTile(
-                      tx: tx,
-                      userName: getDisplayName(
-                        tx.userId ?? '',
-                        currentUserId,
-                        userNames,
-                      ),
-                      showDivider: i < txState.transactions.length - 1,
-                      onEdit: () => _editSharedTransaction(context, tx),
-                      onDelete: () => _confirmDeleteSharedTransaction(context, ref, tx),
-                    );
-                }),
-              ),
-            );
-          }),
+              return AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                child: KeyedSubtree(
+                  key: ValueKey(
+                    '${txState.isLoading}-${txState.error}-${txState.transactions.length}',
+                  ),
+                  child: content,
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: AppUi.compactGap),
+          Text(
+            'Swipe right to edit, left to delete.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.textTheme.labelMedium?.color,
+            ),
+          ),
         ],
       ),
     );
@@ -212,9 +235,12 @@ class SharedExpensesPage extends ConsumerWidget {
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16)),
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: const Text('Confirm delete'),
-          content: const Text('Delete this transaction? This cannot be undone.'),
+          content: const Text(
+            'Delete this transaction? This cannot be undone.',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -222,8 +248,10 @@ class SharedExpensesPage extends ConsumerWidget {
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete',
-                  style: TextStyle(color: AppTheme.negative)),
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: AppTheme.negative),
+              ),
             ),
           ],
         );
@@ -244,7 +272,10 @@ class SharedExpensesPage extends ConsumerWidget {
   }
 
   void _showAllTripsModal(
-      BuildContext context, List<TripSummary> trips, ThemeData theme) {
+    BuildContext context,
+    List<TripSummary> trips,
+    ThemeData theme,
+  ) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -307,10 +338,7 @@ class SharedExpensesPage extends ConsumerWidget {
 // ── Pool summary card ────────────────────────────────────────────────────────
 
 class _PoolSummaryCard extends StatelessWidget {
-  const _PoolSummaryCard({
-    required this.month,
-    required this.totalExpense,
-  });
+  const _PoolSummaryCard({required this.month, required this.totalExpense});
 
   final DateTime month;
   final double totalExpense;
@@ -395,14 +423,17 @@ class _TripCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       trip.tripName ?? 'Unnamed Trip',
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
@@ -420,23 +451,31 @@ class _TripCard extends StatelessWidget {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Icon(Icons.calendar_today_rounded,
-                      size: 14,
-                      color: theme.textTheme.labelMedium?.color),
+                  Icon(
+                    Icons.calendar_today_rounded,
+                    size: 14,
+                    color: theme.textTheme.labelMedium?.color,
+                  ),
                   const SizedBox(width: 6),
-                  Text(dateRange,
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: theme.textTheme.labelMedium?.color)),
+                  Text(
+                    dateRange,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.textTheme.labelMedium?.color,
+                    ),
+                  ),
                   if (trip.durationDays != null) ...[
                     const SizedBox(width: 12),
-                    Icon(Icons.access_time_rounded,
-                        size: 14,
-                        color: theme.textTheme.labelMedium?.color),
+                    Icon(
+                      Icons.access_time_rounded,
+                      size: 14,
+                      color: theme.textTheme.labelMedium?.color,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       '${trip.durationDays} day${trip.durationDays == 1 ? '' : 's'}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.textTheme.labelMedium?.color),
+                        color: theme.textTheme.labelMedium?.color,
+                      ),
                     ),
                   ],
                 ],
@@ -445,9 +484,11 @@ class _TripCard extends StatelessWidget {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    Icon(Icons.receipt_long_rounded,
-                        size: 14,
-                        color: theme.textTheme.labelMedium?.color),
+                    Icon(
+                      Icons.receipt_long_rounded,
+                      size: 14,
+                      color: theme.textTheme.labelMedium?.color,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       'SGD ${fmt.format(trip.totalExpense!)}',
@@ -456,9 +497,12 @@ class _TripCard extends StatelessWidget {
                         fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
-                    Text(' total expenses',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.textTheme.labelMedium?.color)),
+                    Text(
+                      ' total expenses',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.textTheme.labelMedium?.color,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -487,18 +531,20 @@ class _NoTripCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.luggage_rounded,
-              size: 32,
-              color: theme.textTheme.labelMedium?.color),
+          Icon(
+            Icons.luggage_rounded,
+            size: 32,
+            color: theme.textTheme.labelMedium?.color,
+          ),
           const SizedBox(width: 14),
           Text(
             'No trips found',
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: theme.textTheme.labelMedium?.color),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.textTheme.labelMedium?.color,
+            ),
           ),
         ],
       ),
     );
   }
 }
-

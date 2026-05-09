@@ -68,8 +68,10 @@ class AppTheme {
         filled: true,
         fillColor: _lightBg,
         hintStyle: TextStyle(color: _lightSubtle, fontSize: 15),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Color(0xFFE5E5EA)),
@@ -89,8 +91,9 @@ class AppTheme {
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 15),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
       ),
@@ -145,8 +148,10 @@ class AppTheme {
         filled: true,
         fillColor: _darkSurface,
         hintStyle: TextStyle(color: _darkSubtle, fontSize: 15),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Color(0xFF2C2C2E)),
@@ -166,8 +171,9 @@ class AppTheme {
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 15),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
       ),
@@ -177,39 +183,51 @@ class AppTheme {
   static TextTheme _buildTextTheme(Color primary, Color subtle) {
     return TextTheme(
       headlineLarge: TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.w700,
-          color: primary,
-          letterSpacing: -0.5),
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
+        color: primary,
+        letterSpacing: -0.5,
+      ),
       headlineMedium: TextStyle(
-          fontSize: 26,
-          fontWeight: FontWeight.w700,
-          color: primary,
-          letterSpacing: -0.5),
+        fontSize: 26,
+        fontWeight: FontWeight.w700,
+        color: primary,
+        letterSpacing: -0.5,
+      ),
       headlineSmall: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: primary,
-          letterSpacing: -0.3),
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: primary,
+        letterSpacing: -0.3,
+      ),
       titleLarge: TextStyle(
-          fontSize: 17,
-          fontWeight: FontWeight.w600,
-          color: primary,
-          letterSpacing: -0.2),
-      bodyLarge:
-          TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: primary),
-      bodyMedium:
-          TextStyle(fontSize: 15, fontWeight: FontWeight.w400, color: primary),
+        fontSize: 17,
+        fontWeight: FontWeight.w600,
+        color: primary,
+        letterSpacing: -0.2,
+      ),
+      bodyLarge: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        color: primary,
+      ),
+      bodyMedium: TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w400,
+        color: primary,
+      ),
       labelMedium: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: subtle,
-          letterSpacing: 0.8),
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: subtle,
+        letterSpacing: 0.8,
+      ),
       labelSmall: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
-          color: subtle,
-          letterSpacing: 0.6),
+        fontSize: 10,
+        fontWeight: FontWeight.w500,
+        color: subtle,
+        letterSpacing: 0.6,
+      ),
     );
   }
 }

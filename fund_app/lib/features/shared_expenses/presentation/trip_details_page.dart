@@ -17,15 +17,14 @@ import 'widgets/trip_expense_tile.dart';
 class TripDetailsPage extends ConsumerWidget {
   final TripSummary trip;
 
-  const TripDetailsPage({
-    super.key,
-    required this.trip,
-  });
+  const TripDetailsPage({super.key, required this.trip});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final tripExpensesAsync = ref.watch(tripExpensesProvider(trip.tripId ?? ''));
+    final tripExpensesAsync = ref.watch(
+      tripExpensesProvider(trip.tripId ?? ''),
+    );
     final userNames = ref.watch(sharedUserNamesProvider).value ?? {};
     final currentUserAsync = ref.watch(currentUserProvider);
     final currentUserId = currentUserAsync.maybeWhen(
@@ -54,7 +53,10 @@ class TripDetailsPage extends ConsumerWidget {
                 ),
               ),
               centerTitle: false,
-              titlePadding: const EdgeInsetsDirectional.only(start: 56, bottom: 16),
+              titlePadding: const EdgeInsetsDirectional.only(
+                start: 56,
+                bottom: 16,
+              ),
             ),
           ),
 
@@ -65,7 +67,7 @@ class TripDetailsPage extends ConsumerWidget {
               delegate: SliverChildListDelegate([
                 _TripInfoCard(trip: trip, theme: theme),
                 const SizedBox(height: AppUi.sectionGap),
-                
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -100,7 +102,8 @@ class TripDetailsPage extends ConsumerWidget {
                         itemCount: expenses.length,
                         itemBuilder: (context, index) {
                           final expense = expenses[index];
-                          final userName = userNames[expense.userId] ?? 'Unknown';
+                          final userName =
+                              userNames[expense.userId] ?? 'Unknown';
                           return TripExpenseTile(
                             expense: expense,
                             userName: userName,
@@ -111,11 +114,8 @@ class TripDetailsPage extends ConsumerWidget {
                               expense,
                               currentUserId,
                             ),
-                            onDelete: () => _handleDeleteExpense(
-                              context,
-                              ref,
-                              expense,
-                            ),
+                            onDelete: () =>
+                                _handleDeleteExpense(context, ref, expense),
                           );
                         },
                       ),
@@ -128,8 +128,10 @@ class TripDetailsPage extends ConsumerWidget {
                     ),
                   ),
                   error: (e, _) => Center(
-                    child: Text('Failed to load: $e',
-                        style: const TextStyle(color: AppTheme.negative)),
+                    child: Text(
+                      'Failed to load: $e',
+                      style: const TextStyle(color: AppTheme.negative),
+                    ),
                   ),
                 ),
               ]),
@@ -195,28 +197,36 @@ class TripDetailsPage extends ConsumerWidget {
   ) async {
     // HapticFeedback.warningImpact();
     final theme = Theme.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Expense?'),
-        content: const Text('This will permanently remove this item from your trip records.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: TextStyle(color: theme.hintColor)),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.error,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Text('Delete'),
+            title: const Text('Delete Expense?'),
+            content: const Text(
+              'This will permanently remove this item from your trip records.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text('Cancel', style: TextStyle(color: theme.hintColor)),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: FilledButton.styleFrom(
+                  backgroundColor: theme.colorScheme.error,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
 
     if (!confirmed || !context.mounted) return;
 
@@ -240,10 +250,7 @@ class _TripInfoCard extends StatelessWidget {
   final TripSummary trip;
   final ThemeData theme;
 
-  const _TripInfoCard({
-    required this.trip,
-    required this.theme,
-  });
+  const _TripInfoCard({required this.trip, required this.theme});
 
   @override
   Widget build(BuildContext context) {
@@ -253,73 +260,77 @@ class _TripInfoCard extends StatelessWidget {
     final endStr = trip.endDate != null
         ? DateFormat('MMM d, yyyy').format(trip.endDate!)
         : '-';
-    final totalStr = NumberFormat.currency(symbol: 'SGD ', decimalDigits: 2)
-        .format(trip.totalExpense ?? 0);
+    final totalStr = NumberFormat.currency(
+      symbol: 'SGD ',
+      decimalDigits: 2,
+    ).format(trip.totalExpense ?? 0);
 
     return AppCardSurface(
       padding: const EdgeInsets.all(20),
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _StatusBadge(trip: trip),
+              Text(
+                '${trip.durationDays ?? 0} days duration',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.hintColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            totalStr,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: AppTheme.negative,
+              letterSpacing: -0.5,
+            ),
+          ),
+          Text(
+            'TOTAL TRIP EXPENDITURE',
+            style: theme.textTheme.labelSmall?.copyWith(
+              letterSpacing: 0.8,
+              color: theme.hintColor,
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Divider(height: 1, thickness: 0.5),
+          ),
+          IntrinsicHeight(
+            child: Row(
               children: [
-                _StatusBadge(trip: trip),
-                Text(
-                  '${trip.durationDays ?? 0} days duration',
-                  style: theme.textTheme.labelMedium?.copyWith(color: theme.hintColor),
+                Expanded(
+                  child: _DetailItem(
+                    label: 'Departure',
+                    value: startStr,
+                    icon: Icons.flight_takeoff_rounded,
+                    theme: theme,
+                  ),
+                ),
+                VerticalDivider(
+                  width: 32,
+                  thickness: 1,
+                  color: theme.dividerColor.withValues(alpha: 0.1),
+                ),
+                Expanded(
+                  child: _DetailItem(
+                    label: 'Return',
+                    value: endStr,
+                    icon: Icons.flight_land_rounded,
+                    theme: theme,
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            Text(
-              totalStr,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: AppTheme.negative,
-                letterSpacing: -0.5,
-              ),
-            ),
-            Text(
-              'TOTAL TRIP EXPENDITURE',
-              style: theme.textTheme.labelSmall?.copyWith(
-                letterSpacing: 0.8,
-                color: theme.hintColor,
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: Divider(height: 1, thickness: 0.5),
-            ),
-            IntrinsicHeight(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _DetailItem(
-                      label: 'Departure',
-                      value: startStr,
-                      icon: Icons.flight_takeoff_rounded,
-                      theme: theme,
-                    ),
-                  ),
-                  VerticalDivider(
-                    width: 32,
-                    thickness: 1,
-                    color: theme.dividerColor.withValues(alpha: 0.1),
-                  ),
-                  Expanded(
-                    child: _DetailItem(
-                      label: 'Return',
-                      value: endStr,
-                      icon: Icons.flight_land_rounded,
-                      theme: theme,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -381,7 +392,9 @@ class _DetailItem extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              style: theme.textTheme.labelSmall?.copyWith(color: theme.hintColor),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.hintColor,
+              ),
             ),
           ],
         ),

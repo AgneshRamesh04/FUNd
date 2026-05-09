@@ -47,10 +47,11 @@ class AppCardSurface extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(AppUi.cardRadius),
-        border: Border.all(color: theme.dividerTheme.color ?? Colors.transparent),
+        border: Border.all(
+          color: theme.dividerTheme.color ?? Colors.transparent,
+        ),
       ),
       child: child,
     );
   }
 }
-

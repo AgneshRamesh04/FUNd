@@ -49,11 +49,7 @@ class _ManageLeaveTotalsPageState extends ConsumerState<ManageLeaveTotalsPage> {
     try {
       await ref
           .read(leaveTrackingMutationProvider.notifier)
-          .updateTotal(
-            userId: widget.userId,
-            year: widget.year,
-            total: total,
-          );
+          .updateTotal(userId: widget.userId, year: widget.year, total: total);
 
       if (mounted) {
         // Invalidate and refetch the provider
@@ -135,12 +131,12 @@ class _ManageLeaveTotalsPageState extends ConsumerState<ManageLeaveTotalsPage> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                                Text(
-                                  'Used',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.textTheme.labelMedium?.color,
-                                  ),
+                              Text(
+                                'Used',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.textTheme.labelMedium?.color,
                                 ),
+                              ),
                               const SizedBox(height: 4),
                               Text(
                                 '${tracking.used} days',
@@ -186,49 +182,50 @@ class _ManageLeaveTotalsPageState extends ConsumerState<ManageLeaveTotalsPage> {
                 // Total Leave Input
                 AppCardSurface(
                   child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Total Leave Days',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    TextField(
-                      controller: _totalController,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: false),
-                      decoration: InputDecoration(
-                        hintText: '20',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        prefixIcon: Icon(
-                          Icons.calendar_month_rounded,
-                          size: 18,
-                          color: AppTheme.accent.withValues(alpha: 0.5),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Total Leave Days',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
                         ),
                       ),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: _totalController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: false,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: '20',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.calendar_month_rounded,
+                            size: 18,
+                            color: AppTheme.accent.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Set the total number of leave days available for ${widget.year}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.textTheme.labelMedium?.color,
+                      const SizedBox(height: 8),
+                      Text(
+                        'Set the total number of leave days available for ${widget.year}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.textTheme.labelMedium?.color,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: AppUi.sectionGap),
 
@@ -286,8 +283,9 @@ class _ManageLeaveTotalsPageState extends ConsumerState<ManageLeaveTotalsPage> {
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : Text(

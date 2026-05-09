@@ -16,9 +16,10 @@ class RealtimeService {
   /// [_channels] is empty (i.e. after [unsubscribe] has completed).
   void subscribe() {
     assert(
-        _channels.isEmpty,
-        'RealtimeService.subscribe() called while channels are still open. '
-        'Await unsubscribe() first.');
+      _channels.isEmpty,
+      'RealtimeService.subscribe() called while channels are still open. '
+      'Await unsubscribe() first.',
+    );
 
     // ── transactions → pool_summary (balance + inflow/outflow) + user_debt ──
     _channels.add(
@@ -77,7 +78,6 @@ class RealtimeService {
           )
           .subscribe(),
     );
-
 
     // ── trips → trip_summary (provider not yet implemented) ──────────────────
     _channels.add(

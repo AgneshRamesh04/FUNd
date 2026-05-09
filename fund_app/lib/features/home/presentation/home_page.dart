@@ -24,8 +24,7 @@ class HomePage extends ConsumerWidget {
     final debtsAsync = ref.watch(userDebtsProvider);
     final leaves =
         ref.watch(userLeavesProvider(selectedMonth.year)).value ?? [];
-    final inflowOutflowAsync =
-        ref.watch(inflowOutflowProvider(selectedMonth));
+    final inflowOutflowAsync = ref.watch(inflowOutflowProvider(selectedMonth));
     final currentUserAsync = ref.watch(currentUserProvider);
     final currentUserId = currentUserAsync.maybeWhen(
       data: (user) => user.id,
@@ -41,9 +40,7 @@ class HomePage extends ConsumerWidget {
           poolBalanceAsync.when(
             data: (balance) => PoolBalanceCard(balance: balance),
             loading: () => const CardSkeleton(),
-            error: (e, st) => ErrorState(
-              message: e.toString(),
-            ),
+            error: (e, st) => ErrorState(message: e.toString()),
           ),
           const SizedBox(height: AppUi.itemGap),
           // Inflow/Outflow Cards
@@ -57,9 +54,7 @@ class HomePage extends ConsumerWidget {
                     positive: true,
                   ),
                   loading: () => const CardSkeleton(),
-                  error: (e, st) => ErrorState(
-                    message: e.toString(),
-                  ),
+                  error: (e, st) => ErrorState(message: e.toString()),
                 ),
               ),
               const SizedBox(width: AppUi.compactGap),
@@ -71,9 +66,7 @@ class HomePage extends ConsumerWidget {
                     positive: false,
                   ),
                   loading: () => const CardSkeleton(),
-                  error: (e, st) => ErrorState(
-                    message: e.toString(),
-                  ),
+                  error: (e, st) => ErrorState(message: e.toString()),
                 ),
               ),
             ],
@@ -85,18 +78,18 @@ class HomePage extends ConsumerWidget {
                 ? const DebtEmptyState()
                 : DebtCard(
                     debts: debts
-                        .map((d) => Debt(
-                          userId: d.userId,
-                          userName: d.userName,
-                          amount: d.amount,
-                        ))
+                        .map(
+                          (d) => Debt(
+                            userId: d.userId,
+                            userName: d.userName,
+                            amount: d.amount,
+                          ),
+                        )
                         .toList(),
                     currentUserId: currentUserId,
                   ),
             loading: () => const CardSkeleton(),
-            error: (e, st) => ErrorState(
-              message: e.toString(),
-            ),
+            error: (e, st) => ErrorState(message: e.toString()),
           ),
           // Leave Tracker
           if (leaves.isNotEmpty) ...[

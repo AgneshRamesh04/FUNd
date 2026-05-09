@@ -40,21 +40,17 @@ class LeaveEntriesNotifier extends StateNotifier<LeaveEntriesState> {
   final int _year;
 
   LeaveEntriesNotifier(this._repo, this._userId, this._year)
-      : super(const LeaveEntriesState()) {
+    : super(const LeaveEntriesState()) {
     _loadEntries();
   }
 
   Future<void> _loadEntries() async {
     try {
       state = state.copyWith(isLoading: true, clearError: true);
-      final entries =
-          await _repo.getLeaveEntriesByYear(_userId, _year);
+      final entries = await _repo.getLeaveEntriesByYear(_userId, _year);
       state = state.copyWith(entries: entries, isLoading: false);
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
@@ -94,32 +90,38 @@ class LeaveEntriesNotifier extends StateNotifier<LeaveEntriesState> {
   }
 }
 
-final leaveEntriesByYearProvider = StateNotifierProvider.family<
-    LeaveEntriesNotifier,
-    LeaveEntriesState,
-    (String userId, int year)>((ref, args) {
-  final repo = ref.watch(leaveRepositoryProvider);
-  return LeaveEntriesNotifier(repo, args.$1, args.$2);
-});
+final leaveEntriesByYearProvider =
+    StateNotifierProvider.family<
+      LeaveEntriesNotifier,
+      LeaveEntriesState,
+      (String userId, int year)
+    >((ref, args) {
+      final repo = ref.watch(leaveRepositoryProvider);
+      return LeaveEntriesNotifier(repo, args.$1, args.$2);
+    });
 
 // ── Leave Tracking State ──────────────────────────────────────────────────
 
-final leaveTrackingProvider = FutureProvider.family<LeaveTracking?, (String userId, int year)>(
-    (ref, args) async {
-  final repo = ref.watch(leaveRepositoryProvider);
-  try {
-    return await repo.createOrGetLeaveTracking(args.$1, args.$2);
-  } catch (e) {
-    throw Exception('Failed to fetch leave tracking: $e');
-  }
-});
+final leaveTrackingProvider =
+    FutureProvider.family<LeaveTracking?, (String userId, int year)>((
+      ref,
+      args,
+    ) async {
+      final repo = ref.watch(leaveRepositoryProvider);
+      try {
+        return await repo.createOrGetLeaveTracking(args.$1, args.$2);
+      } catch (e) {
+        throw Exception('Failed to fetch leave tracking: $e');
+      }
+    });
 
 // ── Leave Tracking Mutation Provider ──────────────────────────────────────
 
 class LeaveTrackingMutationNotifier extends StateNotifier<AsyncValue<void>> {
   final LeaveRepository _repo;
 
-  LeaveTrackingMutationNotifier(this._repo) : super(const AsyncValue.data(null));
+  LeaveTrackingMutationNotifier(this._repo)
+    : super(const AsyncValue.data(null));
 
   Future<void> updateTotal({
     required String userId,
@@ -142,30 +144,36 @@ class LeaveTrackingMutationNotifier extends StateNotifier<AsyncValue<void>> {
 }
 
 final leaveTrackingMutationProvider =
-    StateNotifierProvider<LeaveTrackingMutationNotifier, AsyncValue<void>>(
-        (ref) {
-  final repo = ref.watch(leaveRepositoryProvider);
-  return LeaveTrackingMutationNotifier(repo);
-});
+    StateNotifierProvider<LeaveTrackingMutationNotifier, AsyncValue<void>>((
+      ref,
+    ) {
+      final repo = ref.watch(leaveRepositoryProvider);
+      return LeaveTrackingMutationNotifier(repo);
+    });
 
 // ── All Leave Tracking for User ───────────────────────────────────────────
 
 final allLeaveTrackingProvider =
     FutureProvider.family<List<LeaveTracking>, String>((ref, userId) async {
-  final repo = ref.watch(leaveRepositoryProvider);
-  return repo.getLeaveTrackingForUser(userId);
-});
+      final repo = ref.watch(leaveRepositoryProvider);
+      return repo.getLeaveTrackingForUser(userId);
+    });
 
 // ── Leave Summary ─────────────────────────────────────────────────────────
 
-final leaveSummaryProvider = FutureProvider.family<LeaveSummary?, (String userId, int year)>(
-    (ref, args) async {
-  final repo = ref.watch(leaveRepositoryProvider);
-  return repo.getLeaveSummary(args.$1, args.$2);
-});
+final leaveSummaryProvider =
+    FutureProvider.family<LeaveSummary?, (String userId, int year)>((
+      ref,
+      args,
+    ) async {
+      final repo = ref.watch(leaveRepositoryProvider);
+      return repo.getLeaveSummary(args.$1, args.$2);
+    });
 
-final allLeaveSummaryProvider =
-    FutureProvider.family<List<LeaveSummary>, int>((ref, year) async {
+final allLeaveSummaryProvider = FutureProvider.family<List<LeaveSummary>, int>((
+  ref,
+  year,
+) async {
   final repo = ref.watch(leaveRepositoryProvider);
   return repo.getAllLeaveSummary(year);
 });

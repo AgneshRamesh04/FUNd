@@ -46,7 +46,10 @@ class LeaveRepository {
     }
   }
 
-  Future<List<LeaveEntry>> getLeaveEntriesByYear(String userId, int year) async {
+  Future<List<LeaveEntry>> getLeaveEntriesByYear(
+    String userId,
+    int year,
+  ) async {
     try {
       final startDate = DateTime.utc(year, 1, 1).toIso8601String();
       final nextYearStartDate = DateTime.utc(year + 1, 1, 1).toIso8601String();
@@ -89,13 +92,16 @@ class LeaveRepository {
           .maybeSingle();
 
       if (response == null) return null;
-      return LeaveTracking.fromJson(response as Map<String, dynamic>);
+      return LeaveTracking.fromJson(response);
     } catch (e) {
       throw Exception('Failed to fetch leave tracking: $e');
     }
   }
 
-  Future<LeaveTracking> createOrGetLeaveTracking(String userId, int year) async {
+  Future<LeaveTracking> createOrGetLeaveTracking(
+    String userId,
+    int year,
+  ) async {
     try {
       // Try to get existing
       final existing = await getLeaveTracking(userId, year);
@@ -104,16 +110,11 @@ class LeaveRepository {
       // Create new
       final response = await _supabase
           .from('leave_tracking')
-          .insert({
-            'user_id': userId,
-            'year': year,
-            'used': 0,
-            'total': 0,
-          })
+          .insert({'user_id': userId, 'year': year, 'used': 0, 'total': 0})
           .select()
           .single();
 
-      return LeaveTracking.fromJson(response as Map<String, dynamic>);
+      return LeaveTracking.fromJson(response);
     } catch (e) {
       throw Exception('Failed to create or get leave tracking: $e');
     }
@@ -127,7 +128,7 @@ class LeaveRepository {
     try {
       // Ensure record exists
       final existing = await getLeaveTracking(userId, year);
-      
+
       if (existing != null) {
         await _supabase
             .from('leave_tracking')
@@ -176,7 +177,7 @@ class LeaveRepository {
           .maybeSingle();
 
       if (response == null) return null;
-      return LeaveSummary.fromJson(response as Map<String, dynamic>);
+      return LeaveSummary.fromJson(response);
     } catch (e) {
       throw Exception('Failed to fetch leave summary: $e');
     }

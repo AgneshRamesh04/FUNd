@@ -46,7 +46,7 @@ class PersonalTransactionsState {
 class PersonalTransactionsNotifier
     extends StateNotifier<PersonalTransactionsState> {
   PersonalTransactionsNotifier(this._repo, this._monthKey)
-      : super(const PersonalTransactionsState()) {
+    : super(const PersonalTransactionsState()) {
     _loadFirst();
   }
 
@@ -90,15 +90,20 @@ class PersonalTransactionsNotifier
 }
 
 /// Family provider keyed by month (YYYY-MM format) for caching per month
-final personalTransactionsProvider = StateNotifierProvider.family<
-    PersonalTransactionsNotifier, PersonalTransactionsState, String>((ref, monthKey) {
-  return PersonalTransactionsNotifier(
-    ref.watch(personalRepositoryProvider),
-    monthKey,
-  );
-});
+final personalTransactionsProvider =
+    StateNotifierProvider.family<
+      PersonalTransactionsNotifier,
+      PersonalTransactionsState,
+      String
+    >((ref, monthKey) {
+      return PersonalTransactionsNotifier(
+        ref.watch(personalRepositoryProvider),
+        monthKey,
+      );
+    });
 
-final personalUserNamesProvider =
-    FutureProvider<Map<String, String>>((ref) async {
+final personalUserNamesProvider = FutureProvider<Map<String, String>>((
+  ref,
+) async {
   return ref.watch(personalRepositoryProvider).fetchUserNames();
 });

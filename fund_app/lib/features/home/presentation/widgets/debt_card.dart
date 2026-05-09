@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/username_utils.dart';
+import '../../../../shared/ui/app_ui.dart';
 import '../../data/home_models.dart';
 
 class DebtCard extends StatelessWidget {
@@ -14,29 +15,26 @@ class DebtCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
+    return AppCardSurface(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.dividerTheme.color ?? Colors.transparent,
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('MEMBER DEBTS', style: theme.textTheme.labelMedium),
           const SizedBox(height: 16),
           if (debts.isEmpty)
-            Text('All settled up',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: theme.textTheme.labelMedium?.color))
+            Text(
+              'All settled up',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.textTheme.labelMedium?.color,
+              ),
+            )
           else
             ...List.generate(debts.length, (i) {
               final d = debts[i];
-              final color =
-                  d.amount >= 0 ? AppTheme.negative : AppTheme.positive;
+              final color = d.amount >= 0
+                  ? AppTheme.negative
+                  : AppTheme.positive;
               return Column(
                 children: [
                   Row(
@@ -64,13 +62,12 @@ class DebtCard extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          getDisplayName(
-                            d.userId ?? '',
-                            currentUserId,
-                            {d.userId ?? '': d.userName},
+                          getDisplayName(d.userId ?? '', currentUserId, {
+                            d.userId ?? '': d.userName,
+                          }),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
                           ),
-                          style: theme.textTheme.bodyMedium
-                              ?.copyWith(fontWeight: FontWeight.w500),
                         ),
                       ),
                       Column(
@@ -92,10 +89,7 @@ class DebtCard extends StatelessWidget {
                     ],
                   ),
                   if (i < debts.length - 1)
-                    Divider(
-                      height: 24,
-                      color: theme.dividerTheme.color,
-                    ),
+                    Divider(height: 24, color: theme.dividerTheme.color),
                 ],
               );
             }),

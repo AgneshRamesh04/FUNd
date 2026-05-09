@@ -63,18 +63,17 @@ class LeaveTracking {
       used: json['used'] as int? ?? 0,
       total: json['total'] as int? ?? 0,
       year: json['year'] as int,
-      createdAt: DateTime.parse(json['created_at'] as String? ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updated_at'] as String? ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.parse(
+        json['created_at'] as String? ?? DateTime.now().toIso8601String(),
+      ),
+      updatedAt: DateTime.parse(
+        json['updated_at'] as String? ?? DateTime.now().toIso8601String(),
+      ),
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'user_id': userId,
-      'used': used,
-      'total': total,
-      'year': year,
-    };
+    return {'user_id': userId, 'used': used, 'total': total, 'year': year};
   }
 
   int get remaining => total - used;
@@ -108,7 +107,9 @@ class LeaveSummary {
       used: json['used'] as int? ?? 0,
       total: json['total'] as int? ?? 0,
       year: json['year'] as int,
-      updatedAt: DateTime.parse(json['updated_at'] as String? ?? DateTime.now().toIso8601String()),
+      updatedAt: DateTime.parse(
+        json['updated_at'] as String? ?? DateTime.now().toIso8601String(),
+      ),
     );
   }
 

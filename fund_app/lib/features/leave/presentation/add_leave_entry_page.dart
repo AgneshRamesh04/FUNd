@@ -87,7 +87,9 @@ class _AddLeaveEntryPageState extends ConsumerState<AddLeaveEntryPage> {
         return;
       }
     } catch (_) {
-      _showError('Unable to validate leave balance right now. Please try again.');
+      _showError(
+        'Unable to validate leave balance right now. Please try again.',
+      );
       return;
     }
 
@@ -95,7 +97,9 @@ class _AddLeaveEntryPageState extends ConsumerState<AddLeaveEntryPage> {
 
     try {
       await ref
-          .read(leaveEntriesByYearProvider((_selectedUserId, widget.year)).notifier)
+          .read(
+            leaveEntriesByYearProvider((_selectedUserId, widget.year)).notifier,
+          )
           .addEntry(
             description: _descriptionController.text.trim(),
             daysUsed: days,
@@ -165,121 +169,121 @@ class _AddLeaveEntryPageState extends ConsumerState<AddLeaveEntryPage> {
             const SizedBox(height: AppUi.itemGap),
             AppCardSurface(
               child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Description',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _descriptionController,
-                  decoration: InputDecoration(
-                    hintText: 'e.g., Vacation, Personal leave',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    prefixIcon: Icon(
-                      Icons.edit_rounded,
-                      size: 18,
-                      color: AppTheme.accent.withValues(alpha: 0.5),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Description',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
                     ),
                   ),
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ],
-            ),
-            ),
-            const SizedBox(height: AppUi.itemGap),
-            AppCardSurface(
-              child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Days Used',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _daysController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: false),
-                  decoration: InputDecoration(
-                    hintText: '1',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    prefixIcon: Icon(
-                      Icons.numbers_rounded,
-                      size: 18,
-                      color: AppTheme.accent.withValues(alpha: 0.5),
-                    ),
-                  ),
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ],
-            ),
-            ),
-            const SizedBox(height: AppUi.itemGap),
-            AppCardSurface(
-              child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Leave Date',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                GestureDetector(
-                  onTap: _pickDate,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.cardTheme.color,
-                      border: Border.all(
-                        color: theme.dividerColor,
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _descriptionController,
+                    decoration: InputDecoration(
+                      hintText: 'e.g., Vacation, Personal leave',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      borderRadius: BorderRadius.circular(12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.edit_rounded,
+                        size: 18,
+                        color: AppTheme.accent.withValues(alpha: 0.5),
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today_rounded,
-                          size: 18,
-                          color: AppTheme.accent,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          DateFormat('MMMM d, yyyy').format(_selectedDate),
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppUi.itemGap),
+            AppCardSurface(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Days Used',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _daysController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: false,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: '1',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.numbers_rounded,
+                        size: 18,
+                        color: AppTheme.accent.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(height: AppUi.itemGap),
+            AppCardSurface(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Leave Date',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  GestureDetector(
+                    onTap: _pickDate,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.cardTheme.color,
+                        border: Border.all(color: theme.dividerColor),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            size: 18,
+                            color: AppTheme.accent,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            DateFormat('MMMM d, yyyy').format(_selectedDate),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: AppUi.itemGap),
             tripsAsync.when(
@@ -371,7 +375,9 @@ class _AddLeaveEntryPageState extends ConsumerState<AddLeaveEntryPage> {
               .map(
                 (u) => DropdownMenuItem<String>(
                   value: u.id,
-                  child: Text(getDisplayName(u.id, currentUserId, {u.id: u.name})),
+                  child: Text(
+                    getDisplayName(u.id, currentUserId, {u.id: u.name}),
+                  ),
                 ),
               )
               .toList(),
@@ -382,9 +388,7 @@ class _AddLeaveEntryPageState extends ConsumerState<AddLeaveEntryPage> {
                   setState(() => _selectedUserId = value);
                 },
           decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 12,
@@ -402,10 +406,7 @@ class _AddLeaveEntryPageState extends ConsumerState<AddLeaveEntryPage> {
 
   Widget _buildTripField(ThemeData theme, List<TripSummary> yearTrips) {
     final options = <DropdownMenuItem<String?>>[
-      const DropdownMenuItem<String?>(
-        value: null,
-        child: Text('No trip'),
-      ),
+      const DropdownMenuItem<String?>(value: null, child: Text('No trip')),
       ...yearTrips
           .where((t) => t.tripId != null && t.tripName != null)
           .map(
@@ -416,7 +417,9 @@ class _AddLeaveEntryPageState extends ConsumerState<AddLeaveEntryPage> {
           ),
     ];
 
-    final selectedStillExists = options.any((item) => item.value == _selectedTripId);
+    final selectedStillExists = options.any(
+      (item) => item.value == _selectedTripId,
+    );
     final selectedTripValue = selectedStillExists ? _selectedTripId : null;
 
     return Column(
@@ -440,9 +443,7 @@ class _AddLeaveEntryPageState extends ConsumerState<AddLeaveEntryPage> {
                   setState(() => _selectedTripId = value);
                 },
           decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 12,

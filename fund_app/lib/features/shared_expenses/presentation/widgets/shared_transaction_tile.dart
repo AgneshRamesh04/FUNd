@@ -16,11 +16,7 @@ import '../../data/shared_expenses_models.dart';
         icon: Icons.receipt_long_rounded,
         color: AppTheme.negative,
       ),
-      _ => (
-        label: type,
-        icon: Icons.payment_rounded,
-        color: Colors.grey,
-      ),
+      _ => (label: type, icon: Icons.payment_rounded, color: Colors.grey),
     };
 
 class SharedTransactionTile extends StatelessWidget {
@@ -57,7 +53,14 @@ class SharedTransactionTile extends StatelessWidget {
           children: [
             Icon(Icons.edit_rounded, color: Colors.white),
             SizedBox(height: 4),
-            Text('Edit', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+            Text(
+              'Edit',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       ),
@@ -71,7 +74,14 @@ class SharedTransactionTile extends StatelessWidget {
           children: [
             Icon(Icons.delete_forever_rounded, color: Colors.white),
             SizedBox(height: 4),
-            Text('Delete', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+            Text(
+              'Delete',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       ),
@@ -84,12 +94,11 @@ class SharedTransactionTile extends StatelessWidget {
           return false;
         }
       },
-      child: InkWell( // Use InkWell for better material ripple effects
+      child: InkWell(
+        // Use InkWell for better material ripple effects
         onTap: onEdit,
         child: Container(
-          decoration: BoxDecoration(
-            color: theme.cardColor,
-          ),
+          decoration: BoxDecoration(color: theme.cardColor),
           child: Column(
             children: [
               Padding(
@@ -102,7 +111,8 @@ class SharedTransactionTile extends StatelessWidget {
                       height: 44,
                       decoration: BoxDecoration(
                         color: m.color.withValues(alpha: 0.08),
-                        shape: BoxShape.circle, // Circular icons look more modern
+                        shape:
+                            BoxShape.circle, // Circular icons look more modern
                       ),
                       child: Icon(m.icon, color: m.color, size: 20),
                     ),
@@ -127,10 +137,13 @@ class SharedTransactionTile extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          if (tx.description?.isNotEmpty == true || tx.notes?.isNotEmpty == true) ...[
+                          if (tx.description?.isNotEmpty == true ||
+                              tx.notes?.isNotEmpty == true) ...[
                             const SizedBox(height: 6),
                             Text(
-                              tx.description?.isNotEmpty == true ? tx.description! : tx.notes!,
+                              tx.description?.isNotEmpty == true
+                                  ? tx.description!
+                                  : tx.notes!,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.hintColor.withValues(alpha: 0.7),
                                 fontStyle: FontStyle.italic,
@@ -164,7 +177,8 @@ class SharedTransactionTile extends StatelessWidget {
                 Divider(
                   height: 1,
                   thickness: 0.5, // Thinner divider for a cleaner look
-                  indent: 76,    // Aligns with the start of the text (44 icon + 16 gap + 16 padding)
+                  indent:
+                      76, // Aligns with the start of the text (44 icon + 16 gap + 16 padding)
                   endIndent: 0,
                   color: theme.dividerColor.withValues(alpha: 0.1),
                 ),

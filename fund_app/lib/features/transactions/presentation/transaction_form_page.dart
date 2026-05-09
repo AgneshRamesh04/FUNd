@@ -9,6 +9,7 @@ import '../../../core/utils/date_utils.dart' as app_date_utils;
 import '../../../shared/providers/current_user_provider.dart';
 import '../../../shared/providers/all_pool_members_provider.dart';
 import '../../../shared/ui/app_feedback.dart';
+import '../../../shared/ui/app_ui.dart';
 import '../data/transaction_service.dart';
 import '../../shell/shell_page.dart';
 
@@ -27,8 +28,6 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
   late DateTime _selectedDate;
   late DateTime? _endDate;
   late double _amount;
-  late String _description;
-  late String _tripName;
   late String _selectedUserId; // Current selected user for "By" field
   late bool _isFundPool; // Toggle for FUNd vs user
   bool _isSubmitting = false; // Track form submission state
@@ -49,20 +48,18 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
     _selectedDate = widget.args.initialMonth;
     _endDate = null;
     _amount = 0;
-    _description = '';
-    _tripName = '';
     _selectedUserId = '';
     _isFundPool = false;
     _createdTransactions = [];
     _createdTrips = [];
-    
+
     _descriptionFocusNode = FocusNode();
-    
+
     // Pre-fill form if editing
     if (widget.args.isEditing && widget.args.editingTransaction != null) {
       _initializeFromEditingTransaction();
     }
-    
+
     // Auto-focus description field after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!widget.args.isEditing) {
@@ -73,7 +70,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
 
   void _initializeFromEditingTransaction() {
     final tx = widget.args.editingTransaction;
-    
+
     // Check if it's a SharedTransaction or PersonalTransaction
     if (tx.runtimeType.toString().contains('SharedTransaction')) {
       _isFundPool = tx.userId == null;
@@ -85,7 +82,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       _selectedUserId = tx.userId ?? '';
       _isFundPool = false;
     }
-    
+
     _selectedDate = tx.date;
     _amountController.text = tx.amount.toStringAsFixed(2);
     _descriptionController.text = tx.description ?? '';
@@ -102,15 +99,15 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
     super.dispose();
   }
 
-
-
   Future<void> _pickStartDate() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
-      lastDate: now.add(const Duration(days: 180)), // Limit to 6 months in future
+      lastDate: now.add(
+        const Duration(days: 180),
+      ), // Limit to 6 months in future
     );
     if (picked != null) {
       setState(() => _selectedDate = picked);
@@ -123,7 +120,9 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       context: context,
       initialDate: _endDate ?? _selectedDate,
       firstDate: _selectedDate,
-      lastDate: now.add(const Duration(days: 180)), // Limit to 6 months in future
+      lastDate: now.add(
+        const Duration(days: 180),
+      ), // Limit to 6 months in future
     );
     if (picked != null) {
       setState(() => _endDate = picked);
@@ -136,7 +135,9 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
-      lastDate: now.add(const Duration(days: 180)), // Limit to 6 months in future
+      lastDate: now.add(
+        const Duration(days: 180),
+      ), // Limit to 6 months in future
     );
     if (picked != null) {
       setState(() => _selectedDate = picked);
@@ -147,10 +148,11 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Confirm Delete'),
-        content: const Text('Are you sure you want to delete this transaction? This cannot be undone.'),
+        content: const Text(
+          'Are you sure you want to delete this transaction? This cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -158,33 +160,60 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete',
-                style: TextStyle(color: AppTheme.negative)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: AppTheme.negative),
+            ),
           ),
         ],
       ),
     );
 
-    if (confirmed != true || !context.mounted) return;
+    if (confirmed != true || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
 
     try {
       setState(() => _isSubmitting = true);
-      
+
       final tx = widget.args.editingTransaction;
-      final isPersonal = _transactionType == 'personal_expense' || 
-                         _transactionType == 'borrow' ||
-                         _transactionType == 'deposit' ||
-                         _transactionType == 'monthly_obligation';
+      final isPersonal =
+          _transactionType == 'personal_expense' ||
+          _transactionType == 'borrow' ||
+          _transactionType == 'deposit' ||
+          _transactionType == 'monthly_obligation';
 
       if (isPersonal) {
-        await ref.read(transactionServiceProvider).deletePersonalTransaction(tx.id);
+        await ref
+            .read(transactionServiceProvider)
+            .deletePersonalTransaction(tx.id);
       } else {
-        await ref.read(transactionServiceProvider).deleteSharedTransaction(tx.id);
+        await ref
+            .read(transactionServiceProvider)
+            .deleteSharedTransaction(tx.id);
       }
 
-      if (!context.mounted) return;
-      AppFeedback.showSuccess(context, 'Transaction deleted');
-      Navigator.of(context).pop();
+      if (!mounted) return;
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                SizedBox(width: 10),
+                Expanded(child: Text('Transaction deleted')),
+              ],
+            ),
+            backgroundColor: AppTheme.positive,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      navigator.pop();
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
@@ -228,7 +257,10 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
 
     // Validate: Deposit must always have a user (not FUNd)
     if (_transactionType == 'deposit' && _isFundPool) {
-      AppFeedback.showError(context, 'Deposit must be by a specific user, not FUNd');
+      AppFeedback.showError(
+        context,
+        'Deposit must be by a specific user, not FUNd',
+      );
       return;
     }
 
@@ -241,51 +273,59 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
 
   Future<void> _updateTransaction(bool addAnother) async {
     if (_isSubmitting) return;
-    
+
     try {
       setState(() => _isSubmitting = true);
-      
+
       final tx = widget.args.editingTransaction;
       final monthKey = app_date_utils.DateUtils.toMonthKey(_selectedDate);
       final userId = _isFundPool ? null : _selectedUserId.trim();
-      final notes = _notesController.text.trim().isEmpty ? null : _notesController.text.trim();
+      final notes = _notesController.text.trim().isEmpty
+          ? null
+          : _notesController.text.trim();
       final description = _descriptionController.text.trim();
 
-      if (_transactionType == 'personal_expense' || 
+      if (_transactionType == 'personal_expense' ||
           _transactionType == 'borrow' ||
           _transactionType == 'deposit' ||
           _transactionType == 'monthly_obligation') {
-        await ref.read(transactionServiceProvider).updatePersonalTransaction(
-          id: tx.id,
-          userId: userId ?? _selectedUserId,
-          type: tx.type,
-          amount: _amount,
-          description: description,
-          date: _selectedDate,
-          monthKey: monthKey,
-          notes: notes,
-        );
+        await ref
+            .read(transactionServiceProvider)
+            .updatePersonalTransaction(
+              id: tx.id,
+              userId: userId ?? _selectedUserId,
+              type: tx.type,
+              amount: _amount,
+              description: description,
+              date: _selectedDate,
+              monthKey: monthKey,
+              notes: notes,
+            );
       } else if (_transactionType == 'shared_expense') {
-        await ref.read(transactionServiceProvider).updateSharedTransaction(
-          id: tx.id,
-          type: tx.type,
-          userId: userId,
-          amount: _amount,
-          description: description,
-          date: _selectedDate,
-          monthKey: monthKey,
-          notes: notes,
-        );
+        await ref
+            .read(transactionServiceProvider)
+            .updateSharedTransaction(
+              id: tx.id,
+              type: tx.type,
+              userId: userId,
+              amount: _amount,
+              description: description,
+              date: _selectedDate,
+              monthKey: monthKey,
+              notes: notes,
+            );
       } else if (_transactionType == 'trip_expense') {
-        await ref.read(transactionServiceProvider).updateTripExpense(
-          id: tx.id,
-          type: tx.type,
-          userId: userId,
-          amount: _amount,
-          description: description,
-          date: _selectedDate,
-          notes: notes,
-        );
+        await ref
+            .read(transactionServiceProvider)
+            .updateTripExpense(
+              id: tx.id,
+              type: tx.type,
+              userId: userId,
+              amount: _amount,
+              description: description,
+              date: _selectedDate,
+              notes: notes,
+            );
       }
 
       if (mounted) {
@@ -294,7 +334,9 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
         Navigator.of(context).pop();
       }
     } catch (e) {
-      final appException = e is Exception ? AppException.fromError(e) : AppException.fromError(Exception(e));
+      final appException = e is Exception
+          ? AppException.fromError(e)
+          : AppException.fromError(Exception(e));
       if (mounted) {
         setState(() => _isSubmitting = false);
         AppFeedback.showError(context, appException.getUserFriendlyMessage());
@@ -304,57 +346,69 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
 
   Future<void> _submitToDatabase(bool addAnother) async {
     if (_isSubmitting) return; // Prevent duplicate submissions
-    
+
     try {
       setState(() => _isSubmitting = true);
-      
+
       final monthKey = app_date_utils.DateUtils.toMonthKey(_selectedDate);
       final userId = _isFundPool ? null : _selectedUserId.trim();
-      final notes = _notesController.text.trim().isEmpty ? null : _notesController.text.trim();
+      final notes = _notesController.text.trim().isEmpty
+          ? null
+          : _notesController.text.trim();
       final description = _descriptionController.text.trim();
 
       if (_transactionType == 'personal_expense') {
-        await ref.read(transactionServiceProvider).createPersonalExpense(
-          userId: userId!,
-          amount: _amount,
-          description: description,
-          date: _selectedDate,
-          monthKey: monthKey,
-          notes: notes,
-        );
+        await ref
+            .read(transactionServiceProvider)
+            .createPersonalExpense(
+              userId: userId!,
+              amount: _amount,
+              description: description,
+              date: _selectedDate,
+              monthKey: monthKey,
+              notes: notes,
+            );
       } else if (_transactionType == 'shared_expense') {
-        await ref.read(transactionServiceProvider).createSharedExpense(
-          isFundPool: _isFundPool,
-          userId: userId,
-          amount: _amount,
-          description: description,
-          date: _selectedDate,
-          monthKey: monthKey,
-          notes: notes,
-        );
+        await ref
+            .read(transactionServiceProvider)
+            .createSharedExpense(
+              isFundPool: _isFundPool,
+              userId: userId,
+              amount: _amount,
+              description: description,
+              date: _selectedDate,
+              monthKey: monthKey,
+              notes: notes,
+            );
       } else if (_transactionType == 'deposit') {
-        await ref.read(transactionServiceProvider).createDeposit(
-          userId: userId!,
-          amount: _amount,
-          description: description,
-          date: _selectedDate,
-          monthKey: monthKey,
-          notes: notes,
-        );
+        await ref
+            .read(transactionServiceProvider)
+            .createDeposit(
+              userId: userId!,
+              amount: _amount,
+              description: description,
+              date: _selectedDate,
+              monthKey: monthKey,
+              notes: notes,
+            );
       } else if (_transactionType == 'trip_expense') {
         final tripId = widget.args.tripId;
         if (tripId == null) {
-          throw AppException.validation('Trip ID is required for trip expenses');
+          throw AppException.validation(
+            'Trip ID is required for trip expenses',
+          );
         }
-        await ref.read(transactionServiceProvider).createTripExpense(
-          tripId: tripId,
-          isFundPool: _isFundPool,
-          userId: userId,
-          amount: _amount,
-          description: description,
-          date: _selectedDate,
-          notes: notes,
-        );
+        await ref
+            .read(transactionServiceProvider)
+            .createTripExpense(
+              tripId: tripId,
+              isFundPool: _isFundPool,
+              userId: userId,
+              amount: _amount,
+              description: description,
+              date: _selectedDate,
+              notes: notes,
+            );
       }
 
       final transaction = {
@@ -386,7 +440,9 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
         }
       }
     } catch (e) {
-      final appException = e is Exception ? AppException.fromError(e) : AppException.fromError(Exception(e));
+      final appException = e is Exception
+          ? AppException.fromError(e)
+          : AppException.fromError(Exception(e));
       if (mounted) {
         setState(() => _isSubmitting = false);
         AppFeedback.showError(context, appException.getUserFriendlyMessage());
@@ -406,7 +462,8 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
     }
 
     // Validate: end date must be after start date
-    if (_endDate!.isBefore(_selectedDate) || _endDate!.isAtSameMomentAs(_selectedDate)) {
+    if (_endDate!.isBefore(_selectedDate) ||
+        _endDate!.isAtSameMomentAs(_selectedDate)) {
       AppFeedback.showError(context, 'End date must be after start date');
       return;
     }
@@ -416,15 +473,17 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
 
   Future<void> _submitTripToDatabase(bool addAnother) async {
     if (_isSubmitting) return; // Prevent duplicate submissions
-    
+
     try {
       setState(() => _isSubmitting = true);
-      
-      await ref.read(transactionServiceProvider).createTrip(
-        tripName: _tripNameController.text.trim(),
-        startDate: _selectedDate,
-        endDate: _endDate!,
-      );
+
+      await ref
+          .read(transactionServiceProvider)
+          .createTrip(
+            tripName: _tripNameController.text.trim(),
+            startDate: _selectedDate,
+            endDate: _endDate!,
+          );
 
       final trip = {
         'type': 'add_trip',
@@ -455,7 +514,9 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
         }
       }
     } catch (e) {
-      final appException = e is Exception ? AppException.fromError(e) : AppException.fromError(Exception(e));
+      final appException = e is Exception
+          ? AppException.fromError(e)
+          : AppException.fromError(Exception(e));
       if (mounted) {
         setState(() => _isSubmitting = false);
         AppFeedback.showError(context, appException.getUserFriendlyMessage());
@@ -495,19 +556,37 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       return _buildTripForm(context, theme, poolMembersAsync);
     }
 
-    return _buildTransactionForm(context, theme, currentUserAsync, poolMembersAsync);
+    return _buildTransactionForm(
+      context,
+      theme,
+      currentUserAsync,
+      poolMembersAsync,
+    );
   }
 
-  Widget _buildTripForm(BuildContext context, ThemeData theme,
-      AsyncValue<List<AppUser>> poolMembersAsync) {
+  Widget _buildTripForm(
+    BuildContext context,
+    ThemeData theme,
+    AsyncValue<List<AppUser>> poolMembersAsync,
+  ) {
     return Scaffold(
       appBar: AppBar(
         title: Text(_getFormTitle()),
-        centerTitle: true,
-        automaticallyImplyLeading: true,
+        centerTitle: false,
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.close_rounded),
+          onPressed: () => Navigator.of(context).pop(),
+          tooltip: 'Close',
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(
+          AppUi.pageHorizontalPadding,
+          16,
+          AppUi.pageHorizontalPadding,
+          24,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -531,11 +610,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                     width: 1.5,
                   ),
                 ),
-                child: Icon(
-                  _getFormIcon(),
-                  size: 52,
-                  color: AppTheme.accent,
-                ),
+                child: Icon(_getFormIcon(), size: 52, color: AppTheme.accent),
               ),
             ),
             const SizedBox(height: 32),
@@ -599,7 +674,9 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                     decoration: BoxDecoration(
                       color: theme.cardTheme.color,
                       border: Border.all(
-                        color: theme.dividerTheme.color ?? Colors.grey.withValues(alpha: 0.3),
+                        color:
+                            theme.dividerTheme.color ??
+                            Colors.grey.withValues(alpha: 0.3),
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -647,7 +724,9 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                     decoration: BoxDecoration(
                       color: theme.cardTheme.color,
                       border: Border.all(
-                        color: theme.dividerTheme.color ?? Colors.grey.withValues(alpha: 0.3),
+                        color:
+                            theme.dividerTheme.color ??
+                            Colors.grey.withValues(alpha: 0.3),
                       ),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -680,7 +759,12 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
 
             // Created trips preview
             if (_createdTrips.isNotEmpty) ...[
-              Text('Added Trips', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                'Added Trips',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(14),
@@ -697,41 +781,47 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                   children: _createdTrips
                       .asMap()
                       .entries
-                      .map((entry) => Padding(
-                            padding: EdgeInsets.only(
-                              bottom: entry.key < _createdTrips.length - 1 ? 8 : 0,
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.positive.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(6),
+                      .map(
+                        (entry) => Padding(
+                          padding: EdgeInsets.only(
+                            bottom: entry.key < _createdTrips.length - 1
+                                ? 8
+                                : 0,
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.positive.withValues(
+                                    alpha: 0.15,
                                   ),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    '${entry.key + 1}',
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.positive,
-                                    ),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  '${entry.key + 1}',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.positive,
                                   ),
                                 ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    '${entry.value['name']} (${DateFormat('MMM d').format(DateTime.parse(entry.value['start_date']))} → ${DateFormat('MMM d').format(DateTime.parse(entry.value['end_date']))})',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  '${entry.value['name']} (${DateFormat('MMM d').format(DateTime.parse(entry.value['start_date']))} → ${DateFormat('MMM d').format(DateTime.parse(entry.value['end_date']))})',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                              ],
-                            ),
-                          ))
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
                       .toList(),
                 ),
               ),
@@ -740,7 +830,9 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
 
             // Add Another button
             OutlinedButton.icon(
-              onPressed: _isSubmitting ? null : () => _submitForm(addAnother: true),
+              onPressed: _isSubmitting
+                  ? null
+                  : () => _submitForm(addAnother: true),
               icon: const Icon(Icons.add_rounded, size: 20),
               label: const Text('Add Another Trip'),
               style: OutlinedButton.styleFrom(
@@ -758,7 +850,9 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
 
             // Submit button
             ElevatedButton(
-              onPressed: _isSubmitting ? null : () => _submitForm(addAnother: false),
+              onPressed: _isSubmitting
+                  ? null
+                  : () => _submitForm(addAnother: false),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accent,
                 foregroundColor: Colors.white,
@@ -811,39 +905,23 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
     );
   }
 
-  Widget _buildTransactionForm(BuildContext context, ThemeData theme,
-      AsyncValue<AppUser> currentUserAsync, AsyncValue<List<AppUser>> poolMembersAsync) {
+  Widget _buildTransactionForm(
+    BuildContext context,
+    ThemeData theme,
+    AsyncValue<AppUser> currentUserAsync,
+    AsyncValue<List<AppUser>> poolMembersAsync,
+  ) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-                icon: const Icon(Icons.close_rounded),
-                onPressed: () => Navigator.of(context).pop(),
-                tooltip: 'Close',
-              ),
+          icon: const Icon(Icons.close_rounded),
+          onPressed: () => Navigator.of(context).pop(),
+          tooltip: 'Close',
+        ),
         title: Text(_getFormTitle()),
-        centerTitle: true,
+        centerTitle: false,
         automaticallyImplyLeading: false,
         actions: [
-          if (!widget.args.isEditing)
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 0),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              onPressed: _isSubmitting ? null : () => _submitForm(addAnother: false),
-              child: Text(
-                'Save',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
           if (widget.args.isEditing)
             IconButton(
               icon: const Icon(
@@ -858,7 +936,12 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       ),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(35),
+          padding: const EdgeInsets.fromLTRB(
+            AppUi.pageHorizontalPadding,
+            20,
+            AppUi.pageHorizontalPadding,
+            24,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -875,7 +958,9 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                       color: theme.cardTheme.color,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: theme.dividerTheme.color ?? Colors.grey.withValues(alpha: 0.3),
+                        color:
+                            theme.dividerTheme.color ??
+                            Colors.grey.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Icon(
@@ -893,7 +978,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                           controller: _descriptionController,
                           focusNode: _descriptionFocusNode,
                           decoration: InputDecoration(
-                            hintText: 'Enter a description',
+                            hintText: 'What is this for?',
                             border: InputBorder.none,
                             hintStyle: theme.textTheme.bodyLarge?.copyWith(
                               color: theme.textTheme.labelMedium?.color,
@@ -905,10 +990,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Container(
-                          height: 2,
-                          color: AppTheme.accent,
-                        ),
+                        Container(height: 2, color: AppTheme.accent),
                       ],
                     ),
                   ),
@@ -927,7 +1009,9 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                       color: theme.cardTheme.color,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: theme.dividerTheme.color ?? Colors.grey.withValues(alpha: 0.3),
+                        color:
+                            theme.dividerTheme.color ??
+                            Colors.grey.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Center(
@@ -947,9 +1031,11 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                       children: [
                         TextField(
                           controller: _amountController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           decoration: InputDecoration(
-                            hintText: '0.00',
+                            hintText: '0.00 SGD',
                             border: InputBorder.none,
                             hintStyle: theme.textTheme.headlineSmall?.copyWith(
                               color: theme.textTheme.labelMedium?.color,
@@ -963,7 +1049,9 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                         const SizedBox(height: 8),
                         Container(
                           height: 2,
-                          color: theme.dividerTheme.color ?? Colors.grey.withValues(alpha: 0.3),
+                          color:
+                              theme.dividerTheme.color ??
+                              Colors.grey.withValues(alpha: 0.3),
                         ),
                       ],
                     ),
@@ -977,14 +1065,17 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    '${_getByLabel() }  ',
+                    '${_getByLabel()}  ',
                     style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  _buildUserSelectorButton(theme, currentUserAsync, poolMembersAsync),
+                  _buildUserSelectorButton(
+                    theme,
+                    currentUserAsync,
+                    poolMembersAsync,
+                  ),
                 ],
-
               ),
               const SizedBox(height: 25),
 
@@ -1019,10 +1110,38 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                   // Notes button (right)
                   GestureDetector(
                     onTap: () => _showNotesDialog(context, theme),
-                    child: Icon(
-                      Icons.edit_rounded,
-                      size: 22,
-                      color: AppTheme.accent,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _notesController.text.trim().isNotEmpty
+                            ? AppTheme.accent.withValues(alpha: 0.12)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.edit_note_rounded,
+                            size: 20,
+                            color: AppTheme.accent,
+                          ),
+                          if (_notesController.text.trim().isNotEmpty) ...[
+                            const SizedBox(width: 6),
+                            Text(
+                              'Notes',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppTheme.accent,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -1031,7 +1150,12 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
 
               // Created transactions preview
               if (_createdTransactions.isNotEmpty) ...[
-                Text('Added Transactions', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  'Added Transactions',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(14),
@@ -1048,41 +1172,48 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                     children: _createdTransactions
                         .asMap()
                         .entries
-                        .map((entry) => Padding(
-                              padding: EdgeInsets.only(
-                                bottom: entry.key < _createdTransactions.length - 1 ? 8 : 0,
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    width: 24,
-                                    height: 24,
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.positive.withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(6),
+                        .map(
+                          (entry) => Padding(
+                            padding: EdgeInsets.only(
+                              bottom:
+                                  entry.key < _createdTransactions.length - 1
+                                  ? 8
+                                  : 0,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.positive.withValues(
+                                      alpha: 0.15,
                                     ),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      '${entry.key + 1}',
-                                      style: theme.textTheme.labelSmall?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        color: AppTheme.positive,
-                                      ),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    '${entry.key + 1}',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.positive,
                                     ),
                                   ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      '\$${entry.value['amount']} · ${entry.value['description'] ?? '(no description)'}',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    '\$${entry.value['amount']} · ${entry.value['description'] ?? '(no description)'}',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                ],
-                              ),
-                            ))
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
                         .toList(),
                   ),
                 ),
@@ -1092,7 +1223,9 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
               // Add Another button (hidden when editing)
               if (!widget.args.isEditing)
                 OutlinedButton.icon(
-                  onPressed: _isSubmitting ? null : () => _submitForm(addAnother: true),
+                  onPressed: _isSubmitting
+                      ? null
+                      : () => _submitForm(addAnother: true),
                   icon: const Icon(Icons.add_rounded, size: 20),
                   label: const Text('Add Another'),
                   style: OutlinedButton.styleFrom(
@@ -1103,44 +1236,63 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                     side: BorderSide(
                       color: AppTheme.accent.withValues(alpha: 0.3),
                       width: 1.5,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 24),
+
+              ElevatedButton(
+                onPressed: _isSubmitting
+                    ? null
+                    : () => _submitForm(addAnother: false),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: _isSubmitting
+                    ? SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        widget.args.isEditing ? 'Save Changes' : 'Save',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: _isSubmitting
+                    ? null
+                    : () => Navigator.of(context).pop(),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Cancel',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-
-              // Save and Cancel buttons at bottom (only when editing)
-              if (widget.args.isEditing) ...[                
-                ElevatedButton(
-                  onPressed: _isSubmitting ? null : () => _submitForm(addAnother: false),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.accent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: _isSubmitting
-                      ? SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: const CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : Text(
-                          'Save Changes',
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                          ),
-                        ),
-                ),
-                const SizedBox(height: 12),
-              ]
             ],
           ),
         ),
@@ -1157,10 +1309,8 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
           controller: _notesController,
           maxLines: 4,
           decoration: InputDecoration(
-            hintText: 'Any additional notes...',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
+            hintText: 'Add context, references, or reminders',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
         actions: [
@@ -1169,7 +1319,10 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              Navigator.of(context).pop();
+              if (mounted) setState(() {});
+            },
             child: const Text('Done'),
           ),
         ],
@@ -1177,15 +1330,20 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
     );
   }
 
-  Widget _buildUserSelectorButton(ThemeData theme, AsyncValue<AppUser> currentUserAsync, AsyncValue<List<AppUser>> poolMembersAsync) {
+  Widget _buildUserSelectorButton(
+    ThemeData theme,
+    AsyncValue<AppUser> currentUserAsync,
+    AsyncValue<List<AppUser>> poolMembersAsync,
+  ) {
     return poolMembersAsync.maybeWhen(
       data: (users) {
         final options = users
             .map((u) => {'id': u.id, 'name': u.name, 'type': 'user'})
             .toList();
-        
+
         // Only add FUNd option for shared and trip expenses
-        if (_transactionType == 'shared_expense' || _transactionType == 'trip_expense') {
+        if (_transactionType == 'shared_expense' ||
+            _transactionType == 'trip_expense') {
           options.add({'id': 'fund', 'name': 'FUNd', 'type': 'fund'});
         }
 
@@ -1245,10 +1403,13 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                           else
                             CircleAvatar(
                               radius: 14,
-                              backgroundColor: AppTheme.accent.withValues(alpha: 0.15),
+                              backgroundColor: AppTheme.accent.withValues(
+                                alpha: 0.15,
+                              ),
                               child: Text(
                                 (option['name'] as String).isNotEmpty
-                                    ? (option['name'] as String)[0].toUpperCase()
+                                    ? (option['name'] as String)[0]
+                                          .toUpperCase()
                                     : '?',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
@@ -1284,12 +1445,17 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: theme.cardTheme.color,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: theme.dividerTheme.color ?? Colors.grey.withValues(alpha: 0.3),
+                    color:
+                        theme.dividerTheme.color ??
+                        Colors.grey.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Text(
@@ -1319,9 +1485,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
         decoration: BoxDecoration(
           color: theme.cardTheme.color,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: theme.dividerTheme.color ?? Colors.grey,
-          ),
+          border: Border.all(color: theme.dividerTheme.color ?? Colors.grey),
         ),
         child: Text('Loading...', style: theme.textTheme.bodyMedium),
       ),

@@ -177,10 +177,12 @@ class PersonalPage extends ConsumerWidget {
             },
           ),
           const SizedBox(height: AppUi.compactGap),
-          Text(
-            'Swipe right to edit, left to delete.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.textTheme.labelMedium?.color,
+          Center(
+            child: Text(
+              'Swipe right to edit, left to delete.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.textTheme.labelMedium?.color,
+              ),
             ),
           ),
         ],

@@ -507,6 +507,11 @@ class TransactionFormArgs {
   final bool isEditing;
   final String? tripId; // For trip expense forms
   final String? tripName; // For trip expense forms
+  final String? initialDescription; // For deep-link prefill
+  final double? initialAmount; // For deep-link prefill
+  final String? initialUserName; // For deep-link prefill (e.g., akku/malu)
+  final bool isDeepLink;
+  final bool confirmOnOpen; // For deep-link auto-submit
 
   TransactionFormArgs({
     required this.type,
@@ -515,5 +520,10 @@ class TransactionFormArgs {
     this.isEditing = false,
     this.tripId,
     this.tripName,
+    this.initialDescription,
+    this.initialAmount,
+    this.initialUserName,
+    this.isDeepLink = false,
+    this.confirmOnOpen = false,
   });
 }

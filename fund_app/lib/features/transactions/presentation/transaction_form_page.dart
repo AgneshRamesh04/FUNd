@@ -37,6 +37,8 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
   final _tripNameController = TextEditingController();
   final _notesController = TextEditingController();
   late FocusNode _descriptionFocusNode;
+  bool _didApplyDeepLinkUserPrefill = false;
+  bool _didTriggerDeepLinkConfirm = false;
 
   List<Map<String, dynamic>> _createdTransactions = [];
   List<Map<String, dynamic>> _createdTrips = [];
@@ -58,6 +60,8 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
     // Pre-fill form if editing
     if (widget.args.isEditing && widget.args.editingTransaction != null) {
       _initializeFromEditingTransaction();
+    } else {
+      _initializeFromDeepLinkArgs();
     }
 
     // Auto-focus description field after build
@@ -65,7 +69,33 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
       if (!widget.args.isEditing) {
         _descriptionFocusNode.requestFocus();
       }
+      _triggerDeepLinkConfirmIfNeeded();
     });
+  }
+
+  void _initializeFromDeepLinkArgs() {
+    final initialDescription = widget.args.initialDescription?.trim();
+    if (initialDescription != null && initialDescription.isNotEmpty) {
+      _descriptionController.text = initialDescription;
+    }
+
+    final initialAmount = widget.args.initialAmount;
+    if (initialAmount != null) {
+      _amount = initialAmount;
+      _amountController.text = initialAmount.toString();
+    }
+  }
+
+  void _triggerDeepLinkConfirmIfNeeded() {
+    if (!mounted ||
+        _didTriggerDeepLinkConfirm ||
+        !widget.args.isDeepLink ||
+        !widget.args.confirmOnOpen ||
+        widget.args.isEditing) {
+      return;
+    }
+    _didTriggerDeepLinkConfirm = true;
+    _submitForm(addAnother: false);
   }
 
   void _initializeFromEditingTransaction() {
@@ -1349,8 +1379,42 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
 
         return currentUserAsync.maybeWhen(
           data: (currentUser) {
+            final deepLinkUserName = widget.args.initialUserName?.trim();
+            if (widget.args.isDeepLink &&
+                !_didApplyDeepLinkUserPrefill &&
+                deepLinkUserName != null &&
+                deepLinkUserName.isNotEmpty) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted || _didApplyDeepLinkUserPrefill) return;
+                final normalized = deepLinkUserName.toLowerCase();
+                String? matchedId;
+
+                for (final user in users) {
+                  final name = user.name.trim().toLowerCase();
+                  if (name == normalized || name.startsWith(normalized)) {
+                    matchedId = user.id;
+                    break;
+                  }
+                }
+
+                if (matchedId != null) {
+                  setState(() {
+                    _selectedUserId = matchedId!;
+                    _isFundPool = false;
+                    _didApplyDeepLinkUserPrefill = true;
+                  });
+                  _triggerDeepLinkConfirmIfNeeded();
+                } else {
+                  _didApplyDeepLinkUserPrefill = true;
+                  _triggerDeepLinkConfirmIfNeeded();
+                }
+              });
+            }
+
             // Initialize to current user on first render (deferred via callback)
-            if (_selectedUserId.isEmpty && !_isFundPool) {
+            if (!widget.args.isDeepLink &&
+                _selectedUserId.isEmpty &&
+                !_isFundPool) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted && _selectedUserId.isEmpty) {
                   setState(() {
@@ -1494,7 +1558,7 @@ class _TransactionFormPageState extends ConsumerState<TransactionFormPage> {
 
   String _getSelectedUserName(List<AppUser> users) {
     if (_selectedUserId.isEmpty) {
-      return users.isNotEmpty ? users.first.name : 'Select user';
+      return 'Select user';
     }
     try {
       return users.firstWhere((u) => u.id == _selectedUserId).name;

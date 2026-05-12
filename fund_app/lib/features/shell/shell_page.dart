@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:month_picker_dialog/month_picker_dialog.dart';
 
+import '../../core/notifications/notification_service.dart';
 import '../../core/realtime/realtime_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../shared/providers/current_user_provider.dart';
@@ -29,6 +30,7 @@ class _ShellPageState extends ConsumerState<ShellPage>
   int _currentIndex = 0;
   late PageController _pageController;
   late RealtimeService _realtime;
+  late NotificationService _notifications;
   late DateTime _selectedMonth;
   bool _fabMenuExpanded = false;
   // Only build a tab's page once it has actually been visited.
@@ -44,6 +46,12 @@ class _ShellPageState extends ConsumerState<ShellPage>
     WidgetsBinding.instance.addObserver(this);
     // Capture before any possible disposal so dispose() never touches ref.
     _realtime = ref.read(realtimeServiceProvider);
+    _notifications = ref.read(notificationServiceProvider);
+    unawaited(
+      _notifications.initialize().then((_) {
+        _notifications.syncMonthlyDebtSummaryNotifications();
+      }),
+    );
     _realtime.subscribe();
   }
 

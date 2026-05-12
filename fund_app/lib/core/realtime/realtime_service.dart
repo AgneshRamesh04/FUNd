@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../notifications/notification_service.dart';
 import '../../features/home/data/home_providers.dart';
 import '../../features/personal/data/personal_providers.dart';
 import '../../features/shared_expenses/data/shared_expenses_providers.dart';
@@ -8,9 +9,10 @@ import '../../features/shared_expenses/data/shared_expenses_providers.dart';
 class RealtimeService {
   final SupabaseClient _supabase;
   final Ref _ref;
+  final NotificationService _notificationService;
   final List<RealtimeChannel> _channels = [];
 
-  RealtimeService(this._supabase, this._ref);
+  RealtimeService(this._supabase, this._ref, this._notificationService);
 
   /// Opens one channel per underlying table. Safe to call only when
   /// [_channels] is empty (i.e. after [unsubscribe] has completed).
@@ -31,6 +33,8 @@ class RealtimeService {
             table: 'transactions',
             callback: (payload) {
               _invalidateGlobalTransactionProviders();
+              _notificationService.notifyTransactionChanged();
+              _notificationService.syncMonthlyDebtSummaryNotifications();
 
               final record = payload.newRecord.isNotEmpty
                   ? payload.newRecord
@@ -106,6 +110,7 @@ class RealtimeService {
             callback: (payload) {
               final year = _extractLeaveYearFromPayload(payload);
               _ref.invalidate(userLeavesProvider(year));
+              _notificationService.notifyLeavesChanged();
             },
           )
           .subscribe(),
@@ -121,6 +126,7 @@ class RealtimeService {
             callback: (payload) {
               final year = _extractLeaveYearFromPayload(payload);
               _ref.invalidate(userLeavesProvider(year));
+              _notificationService.notifyLeavesChanged();
             },
           )
           .subscribe(),
@@ -136,6 +142,7 @@ class RealtimeService {
             callback: (payload) {
               final year = _extractLeaveYearFromPayload(payload);
               _ref.invalidate(userLeavesProvider(year));
+              _notificationService.notifyLeavesChanged();
             },
           )
           .subscribe(),
@@ -188,5 +195,9 @@ class RealtimeService {
 }
 
 final realtimeServiceProvider = Provider<RealtimeService>((ref) {
-  return RealtimeService(Supabase.instance.client, ref);
+  return RealtimeService(
+    Supabase.instance.client,
+    ref,
+    ref.watch(notificationServiceProvider),
+  );
 });

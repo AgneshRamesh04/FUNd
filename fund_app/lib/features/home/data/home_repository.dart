@@ -64,4 +64,26 @@ class HomeRepository {
       throw AppException.fromError(e, st);
     }
   }
+
+  Future<List<MonthlyFlowTransaction>> fetchMonthlyFlowTransactions(
+    DateTime month,
+  ) async {
+    try {
+      final start = DateUtils.toMonthKey(DateTime(month.year, month.month, 1));
+      final end = DateUtils.toMonthKey(DateUtils.nextMonth(month));
+      final data = await supabase
+          .from('transactions')
+          .select('id, type, amount, description, date, user_id')
+          .inFilter('type', ['deposit', 'borrow', 'pool_expense'])
+          .gte('date', start)
+          .lt('date', end)
+          .order('date', ascending: false);
+
+      return (data as List)
+          .map((e) => MonthlyFlowTransaction.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e, st) {
+      throw AppException.fromError(e, st);
+    }
+  }
 }

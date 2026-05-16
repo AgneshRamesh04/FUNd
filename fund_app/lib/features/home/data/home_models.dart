@@ -39,3 +39,34 @@ class UserLeave with _$UserLeave {
   factory UserLeave.fromJson(Map<String, dynamic> json) =>
       _$UserLeaveFromJson(json);
 }
+
+class MonthlyFlowTransaction {
+  final String id;
+  final String type;
+  final double amount;
+  final String? description;
+  final DateTime date;
+  final String? userId;
+
+  MonthlyFlowTransaction({
+    required this.id,
+    required this.type,
+    required this.amount,
+    required this.date,
+    this.description,
+    this.userId,
+  });
+
+  factory MonthlyFlowTransaction.fromJson(Map<String, dynamic> json) {
+    return MonthlyFlowTransaction(
+      id: (json['id'] as String?) ?? '',
+      type: (json['type'] as String?) ?? '',
+      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+      description: json['description'] as String?,
+      date: DateTime.parse(json['date'] as String),
+      userId: json['user_id'] as String?,
+    );
+  }
+
+  bool get isInflow => type == 'deposit' || type == 'user_paid_for_pool';
+}

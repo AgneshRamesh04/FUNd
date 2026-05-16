@@ -40,6 +40,9 @@ class TripExpenseTile extends StatelessWidget {
     final theme = Theme.of(context);
     final m = _meta(expense.type);
     final amountStr = 'SGD ${NumberFormat('#,##0.00').format(expense.amount)}';
+    final primaryText = (expense.description?.trim().isNotEmpty ?? false)
+        ? expense.description!.trim()
+        : m.label;
 
     return Dismissible(
       key: Key(expense.id),
@@ -101,8 +104,9 @@ class TripExpenseTile extends StatelessWidget {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 18),
+                padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Icon Badge
                     Container(
@@ -121,44 +125,53 @@ class TripExpenseTile extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            userName,
+                            primaryText,
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 4),
                           Text(
-                            '${m.label} • ${DateFormat('MMM d').format(expense.date)}',
+                            DateFormat('MMM d').format(expense.date),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.hintColor,
                               fontWeight: FontWeight.w500,
+                              height: 1.35,
                             ),
                           ),
-                          if ((expense.description ?? '').isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              expense.description!,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.hintColor.withValues(alpha: 0.7),
-                                fontStyle: FontStyle.italic,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          const SizedBox(height: 2),
+                          Text(
+                            '$userName • ${m.label}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.hintColor.withValues(alpha: 0.85),
+                              fontWeight: FontWeight.w500,
+                              height: 1.35,
                             ),
-                          ],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ],
                       ),
                     ),
                     const SizedBox(width: 12),
                     // Amount & Date Column
-                    Text(
-                      amountStr,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: m.color,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                    Flexible(
+                      flex: 0,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          amountStr,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: m.color,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                          maxLines: 1,
+                          textAlign: TextAlign.right,
+                        ),
                       ),
                     ),
                   ],

@@ -40,6 +40,11 @@ class SharedTransactionTile extends StatelessWidget {
     final theme = Theme.of(context);
     final m = _meta(tx.type);
     final amountStr = 'SGD ${NumberFormat('#,##0.00').format(tx.amount)}';
+    final primaryText = (tx.description?.trim().isNotEmpty ?? false)
+        ? tx.description!.trim()
+        : ((tx.notes?.trim().isNotEmpty ?? false)
+              ? tx.notes!.trim()
+              : m.label);
 
     return Dismissible(
       key: Key(tx.id.toString()),
@@ -102,8 +107,9 @@ class SharedTransactionTile extends StatelessWidget {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 18),
+                padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Icon Badge with softer styling
                     Container(
@@ -123,52 +129,54 @@ class SharedTransactionTile extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            userName,
+                            primaryText,
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.1,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 4),
                           Text(
-                            '${m.label} • ${DateFormat('MMM d').format(tx.date)}',
+                            DateFormat('MMM d').format(tx.date),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.hintColor,
                               fontWeight: FontWeight.w500,
+                              height: 1.35,
                             ),
                           ),
-                          if (tx.description?.isNotEmpty == true ||
-                              tx.notes?.isNotEmpty == true) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              tx.description?.isNotEmpty == true
-                                  ? tx.description!
-                                  : tx.notes!,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.hintColor.withValues(alpha: 0.7),
-                                fontStyle: FontStyle.italic,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          const SizedBox(height: 2),
+                          Text(
+                            '$userName • ${m.label}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.hintColor.withValues(alpha: 0.85),
+                              fontWeight: FontWeight.w500,
+                              height: 1.35,
                             ),
-                          ],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ],
                       ),
                     ),
                     // Amount with tabular figures for alignment
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
+                    Flexible(
+                      flex: 0,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text(
                           amountStr,
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: m.color,
                             fontWeight: FontWeight.w700,
                             fontFeatures: const [FontFeature.tabularFigures()],
                           ),
+                          maxLines: 1,
+                          textAlign: TextAlign.right,
                         ),
-                        // Small "Swipe" hint or status could go here
-                      ],
+                      ),
                     ),
                   ],
                 ),

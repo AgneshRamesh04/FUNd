@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../shared/providers/current_user_provider.dart';
 import '../../../shared/ui/app_ui.dart';
 import '../../leave/presentation/leave_page.dart';
@@ -14,9 +16,14 @@ import 'widgets/leave_card.dart';
 import 'widgets/pool_balance_card.dart';
 
 class HomePage extends ConsumerWidget {
-  const HomePage({super.key, required this.selectedMonth});
+  const HomePage({
+    super.key,
+    required this.selectedMonth,
+    this.onOpenPersonalTab,
+  });
 
   final DateTime selectedMonth;
+  final VoidCallback? onOpenPersonalTab;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,6 +59,8 @@ class HomePage extends ConsumerWidget {
                     title: 'INFLOW',
                     amount: inflowOutflow['inflow'] ?? 0.0,
                     positive: true,
+                    onTap: () =>
+                        _showFlowTransactions(context, _FlowSheetType.inflow),
                   ),
                   loading: () => const CardSkeleton(),
                   error: (e, st) => ErrorState(message: e.toString()),
@@ -64,6 +73,8 @@ class HomePage extends ConsumerWidget {
                     title: 'OUTFLOW',
                     amount: inflowOutflow['outflow'] ?? 0.0,
                     positive: false,
+                    onTap: () =>
+                        _showFlowTransactions(context, _FlowSheetType.outflow),
                   ),
                   loading: () => const CardSkeleton(),
                   error: (e, st) => ErrorState(message: e.toString()),
@@ -87,6 +98,7 @@ class HomePage extends ConsumerWidget {
                         )
                         .toList(),
                     currentUserId: currentUserId,
+                    onTap: onOpenPersonalTab,
                   ),
             loading: () => const CardSkeleton(),
             error: (e, st) => ErrorState(message: e.toString()),
@@ -121,6 +133,158 @@ class HomePage extends ConsumerWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  void _showFlowTransactions(BuildContext context, _FlowSheetType type) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) =>
+          _FlowTransactionsSheet(selectedMonth: selectedMonth, type: type),
+    );
+  }
+}
+
+enum _FlowSheetType { inflow, outflow }
+
+class _FlowTransactionsSheet extends ConsumerWidget {
+  const _FlowTransactionsSheet({required this.selectedMonth, required this.type});
+
+  final DateTime selectedMonth;
+  final _FlowSheetType type;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final txAsync = ref.watch(monthlyFlowTransactionsProvider(selectedMonth));
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              type == _FlowSheetType.inflow
+                  ? 'Monthly Inflows'
+                  : 'Monthly Outflows',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              DateFormat('MMMM yyyy').format(selectedMonth),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.textTheme.labelMedium?.color,
+              ),
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.56,
+              child: txAsync.when(
+                data: (transactions) {
+                  final filtered = transactions.where((tx) {
+                    if (type == _FlowSheetType.inflow) {
+                      return tx.type == 'deposit';
+                    }
+                    return tx.type == 'borrow' || tx.type == 'pool_expense';
+                  }).toList();
+
+                  if (filtered.isEmpty) {
+                    return Center(
+                      child: Text(
+                        type == _FlowSheetType.inflow
+                            ? 'No inflow (deposit) transactions for this month.'
+                            : 'No outflow (borrow/pool expense) transactions for this month.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.textTheme.labelMedium?.color,
+                        ),
+                      ),
+                    );
+                  }
+
+                  return ListView.separated(
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final tx = filtered[index];
+                      final isInflow = tx.type == 'deposit';
+                      final color = isInflow
+                          ? AppTheme.positive
+                          : AppTheme.negative;
+                      final typeLabel = tx.type == 'borrow'
+                          ? 'Borrow'
+                          : tx.type == 'pool_expense'
+                          ? 'Pool Expense'
+                          : 'Deposit';
+                      final title = (tx.description?.trim().isNotEmpty ?? false)
+                          ? tx.description!.trim()
+                          : (isInflow
+                                ? 'Deposit transaction'
+                                : 'Outflow transaction');
+
+                      return AppCardSurface(
+                        padding: const EdgeInsets.all(14),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${DateFormat('d MMM yyyy').format(tx.date)} • $typeLabel',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.textTheme.labelMedium?.color,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              '${isInflow ? '+' : '-'}SGD ${tx.amount.toStringAsFixed(2)}',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                color: color,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+                loading: () => const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                error: (e, _) => Center(
+                  child: Text(
+                    'Failed to load transactions: $e',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

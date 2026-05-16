@@ -34,3 +34,12 @@ final inflowOutflowProvider =
       final repo = ref.watch(homeRepositoryProvider);
       return repo.fetchMonthlyInflowOutflow(month);
     });
+
+final monthlyFlowTransactionsProvider =
+    FutureProvider.family<List<MonthlyFlowTransaction>, DateTime>((
+      ref,
+      month,
+    ) async {
+      final repo = ref.watch(homeRepositoryProvider);
+      return repo.fetchMonthlyFlowTransactions(month);
+    });

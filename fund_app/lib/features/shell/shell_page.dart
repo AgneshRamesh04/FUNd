@@ -102,6 +102,18 @@ class _ShellPageState extends ConsumerState<ShellPage>
     setState(() => _fabMenuExpanded = false);
   }
 
+  void _goToPersonalTab() {
+    setState(() {
+      _initializedTabs.add(1);
+      _currentIndex = 1;
+    });
+    _pageController.animateToPage(
+      1,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
   List<({String label, String type, IconData icon})> _getFabMenuItems() {
     return switch (_currentIndex) {
       0 => [
@@ -348,7 +360,10 @@ class _ShellPageState extends ConsumerState<ShellPage>
           });
         },
         children: [
-          HomePage(selectedMonth: _selectedMonth),
+          HomePage(
+            selectedMonth: _selectedMonth,
+            onOpenPersonalTab: _goToPersonalTab,
+          ),
           _initializedTabs.contains(1)
               ? PersonalPage(selectedMonth: _selectedMonth)
               : const SizedBox.shrink(),

@@ -53,6 +53,11 @@ class TransactionTile extends StatelessWidget {
     final theme = Theme.of(context);
     final m = _meta(tx.type);
     final amountStr = '${m.sign}SGD ${tx.amount.toStringAsFixed(2)}';
+    final primaryText = (tx.description?.trim().isNotEmpty ?? false)
+        ? tx.description!.trim()
+        : ((tx.notes?.trim().isNotEmpty ?? false)
+              ? tx.notes!.trim()
+              : m.label);
 
     return Dismissible(
       key: Key(tx.id.toString()),
@@ -86,8 +91,9 @@ class TransactionTile extends StatelessWidget {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 18),
+                padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Modern Circular Icon Badge
                     Container(
@@ -106,45 +112,53 @@ class TransactionTile extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            userName,
+                            primaryText,
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            DateFormat('d MMM').format(tx.date),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.hintColor,
+                              fontWeight: FontWeight.w500,
+                              height: 1.35,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${m.label} • ${DateFormat('d MMM').format(tx.date)}',
+                            '$userName • ${m.label}',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.hintColor,
+                              color: theme.hintColor.withValues(alpha: 0.85),
                               fontWeight: FontWeight.w500,
+                              height: 1.35,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          if ((tx.description ?? '').isNotEmpty ||
-                              (tx.notes ?? '').isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              (tx.description?.isNotEmpty == true)
-                                  ? tx.description!
-                                  : tx.notes!,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.hintColor.withValues(alpha: 0.7),
-                                fontStyle: FontStyle.italic,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
                         ],
                       ),
                     ),
                     const SizedBox(width: 12),
                     // Amount
-                    Text(
-                      amountStr,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: m.color,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                    Flexible(
+                      flex: 0,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          amountStr,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: m.color,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                          maxLines: 1,
+                          textAlign: TextAlign.right,
+                        ),
                       ),
                     ),
                   ],

@@ -142,7 +142,7 @@ class PersonalPage extends ConsumerWidget {
               } else {
                 // Transactions are already filtered by the provider (backend query)
                 content = AppCardSurface(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
                   child: Column(
                     children: List.generate(txState.transactions.length, (i) {
                       final tx = txState.transactions[i];

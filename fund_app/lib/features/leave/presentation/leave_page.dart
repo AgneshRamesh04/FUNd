@@ -363,7 +363,7 @@ class _LeavePageState extends ConsumerState<LeavePage>
             )
           else
             AppCardSurface(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Column(
                 children: List.generate(leaveEntriesState.entries.length, (i) {
                   final entry = leaveEntriesState.entries[i];
@@ -560,8 +560,9 @@ class _LeavePageState extends ConsumerState<LeavePage>
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 18),
+          padding: const EdgeInsets.symmetric(vertical: 20),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                 width: 44,
@@ -582,22 +583,26 @@ class _LeavePageState extends ConsumerState<LeavePage>
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       DateFormat('d MMM yyyy').format(entry.leaveDate),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.hintColor,
                         fontWeight: FontWeight.w500,
+                        height: 1.35,
                       ),
                     ),
                     if (tripName != null && tripName.isNotEmpty) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Text(
                         tripName,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: AppTheme.accent,
                           fontWeight: FontWeight.w600,
+                          height: 1.35,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -607,11 +612,20 @@ class _LeavePageState extends ConsumerState<LeavePage>
                 ),
               ),
               const SizedBox(width: 12),
-              Text(
-                '${entry.daysUsed}d',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: AppTheme.accent,
-                  fontWeight: FontWeight.w700,
+              Flexible(
+                flex: 0,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    '${entry.daysUsed}d',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: AppTheme.accent,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    textAlign: TextAlign.right,
+                  ),
                 ),
               ),
             ],
